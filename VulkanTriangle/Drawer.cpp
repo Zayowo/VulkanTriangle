@@ -52,6 +52,8 @@ void Drawer::DrawFrame()
         .pSignalSemaphores = &*render_finished_semaphore
     };
     
+    application->renderer.GetQueue().submit(submit_info, *draw_fence);
+    
     // Define the present info
     const vk::PresentInfoKHR present_info =
     {

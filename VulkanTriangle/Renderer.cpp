@@ -291,10 +291,7 @@ void Renderer::CreateLogicalDevice()
     {
         {},
         {.shaderDrawParameters = true},
-        {
-            .synchronization2 = true,
-            .dynamicRendering = true
-            },
+        {.dynamicRendering = true},
         {.extendedDynamicState = true}
     };
 
