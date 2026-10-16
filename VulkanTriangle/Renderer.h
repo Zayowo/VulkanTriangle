@@ -2,27 +2,23 @@
 
 #include "Dependencies.h"
 
+class Application;
+
 class Renderer
 {
 public:
+    Renderer(Application*);
+    
     void CreateInstance();
     void PickPhysicalDevice();
     void CreateLogicalDevice();
     
-    static vk::raii::Instance& GetInstance();
-    static vk::raii::PhysicalDevice& GetPhysicalDevice();
-    static vk::raii::Device& GetDevice();
-
-    // J'ai pas trouvé mieux...
-    static Renderer* Get()
-    {
-        if (!renderer)
-            renderer = new Renderer();
-        return renderer;
-    }
+    vk::raii::Instance& GetInstance();
+    vk::raii::PhysicalDevice& GetPhysicalDevice();
+    vk::raii::Device& GetDevice();
 
 private:
-    static Renderer* renderer;
+    Application* application;
     
     vk::raii::Context context;
     vk::raii::Instance instance = nullptr;
@@ -30,7 +26,7 @@ private:
     vk::raii::PhysicalDevice physical_device = nullptr;
     vk::raii::Device device = nullptr;
     vk::raii::Queue queue = nullptr;
-    
+
     std::vector<const char*> GetRequiredDeviceExtensions();
     std::vector<const char*> GetRequiredExtensions();
     std::vector<const char*> GetRequiredLayers();

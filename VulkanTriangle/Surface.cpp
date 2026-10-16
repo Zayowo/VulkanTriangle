@@ -3,14 +3,18 @@
 #include "Application.h"
 #include "Renderer.h"
 
+Surface::Surface(Application* application) : application(application)
+{
+}
+
 void Surface::CreateSurface()
 {
-    const auto& instance = Renderer::GetInstance();
+    const auto& instance = application->renderer->GetInstance();
     
     // Create a window surface on vkSurface
     // If when creating window surface result is 0, it means it's done well :>
     VkSurfaceKHR vk_surface;
-    if (glfwCreateWindowSurface(*instance, Application::window, nullptr, &vk_surface) != 0)
+    if (glfwCreateWindowSurface(*instance, application->window, nullptr, &vk_surface) != 0)
     {
         throw std::runtime_error("Failed to create window surface!");
     }
@@ -21,8 +25,8 @@ void Surface::CreateSurface()
 
 void Surface::CreateSwapChain()
 {
-    const auto& physical_device = Renderer::GetPhysicalDevice();
-    const auto& device = Renderer::GetDevice();
+    const auto& physical_device = application->renderer->GetPhysicalDevice();
+    const auto& device = application->renderer->GetDevice();
     
     vk::SurfaceCapabilitiesKHR surface_capabilities = physical_device.getSurfaceCapabilitiesKHR(*surface);
     uint32_t min_image_count = ChooseSwapMinImageCount(surface_capabilities);
@@ -94,6 +98,7 @@ vk::PresentModeKHR Surface::ChooseSwapPresentMode(std::vector<vk::PresentModeKHR
 
 vk::Extent2D Surface::ChooseSwapExtent(vk::SurfaceCapabilitiesKHR const& capabilities)
 {
+    
     // Return currentExtent if its width is valid (not an absurd value)
     if (std::cmp_not_equal(capabilities.currentExtent.width, ~0))
     {
@@ -102,7 +107,7 @@ vk::Extent2D Surface::ChooseSwapExtent(vk::SurfaceCapabilitiesKHR const& capabil
 
     // Get width and height values according to the window buffer size
     int width, height;
-    glfwGetFramebufferSize(Application::window, &width, &height);
+    glfwGetFramebufferSize(application->window, &width, &height);
 
     return
     {
@@ -153,9 +158,26 @@ void Surface::CreateImageViews()
         .layerCount = 1
     };
 
+    auto& device = application->renderer->GetDevice();
+    
     for (auto& image : swap_chain_images)
     {
         image_view_create_info.image = image;
-        swap_chain_image_views.emplace_back(Renderer::GetDevice(), image_view_create_info);
+        swap_chain_image_views.emplace_back(device, image_view_create_info);
     }
+}
+
+vk::raii::SurfaceKHR& Surface::GetSurface()
+{
+    return surface;
+}
+
+vk::Extent2D& Surface::GetSwapChainExtent()
+{
+    return swap_chain_extent;
+}
+
+vk::SurfaceFormatKHR& Surface::GetSwapChainSurfaceFormat()
+{
+    return swap_chain_surface_format;
 }

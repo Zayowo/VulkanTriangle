@@ -2,14 +2,24 @@
 
 #include "Dependencies.h"
 
+class Application;
+
 class Surface
 {
 public:
+    Surface(Application*);
+    
     void CreateSurface();
     void CreateSwapChain();
     void CreateImageViews();
-    
+
+    vk::raii::SurfaceKHR& GetSurface();
+    vk::Extent2D& GetSwapChainExtent();
+    vk::SurfaceFormatKHR& GetSwapChainSurfaceFormat();
+
 private:
+    Application* application;
+    
     vk::raii::SurfaceKHR surface = nullptr;
     vk::raii::SwapchainKHR swap_chain = nullptr;
     vk::SurfaceFormatKHR swap_chain_surface_format;

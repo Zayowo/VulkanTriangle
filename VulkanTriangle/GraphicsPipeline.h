@@ -2,12 +2,17 @@
 
 #include "Dependencies.h"
 
+class Application;
+
 class GraphicsPipeline
 {
 public:
+    GraphicsPipeline(Application*);
     void CreateGraphicsPipeline();
     
 private:
+    Application* application;
+    
     vk::raii::PipelineLayout pipeline_layout = nullptr;
     vk::raii::Pipeline pipeline = nullptr;
     

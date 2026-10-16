@@ -2,8 +2,6 @@
 
 #include "Renderer.h"
 
-GLFWwindow* Application::window = nullptr;
-
 void Application::Init()
 {
     InitWindow();
@@ -36,15 +34,20 @@ void Application::InitWindow()
 
 void Application::InitVulkan()
 {
-    Renderer* renderer = Renderer::Get();
+    renderer = new Renderer(this);
+    surface = new Surface(this);
+    graphics_pipeline = new GraphicsPipeline(this);
     
     renderer->CreateInstance();
+    surface->CreateSurface();
+    
     renderer->PickPhysicalDevice();
     renderer->CreateLogicalDevice();
     
-    surface->CreateSurface();
     surface->CreateSwapChain();
     surface->CreateImageViews();
+    
+    graphics_pipeline->CreateGraphicsPipeline();
 }
 
 void Application::DestroyWindow()

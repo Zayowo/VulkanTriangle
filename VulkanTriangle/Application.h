@@ -10,11 +10,13 @@ class Application
 public:
     int width = 800;
     int height = 600;
-    static GLFWwindow* window;
+    GLFWwindow* window = nullptr;
     
-    Surface* surface;
-    GraphicsPipeline* graphics_pipeline;
-    
+    // Oui oui la crêperie :)
+    Renderer* renderer = nullptr;
+    Surface* surface = nullptr;
+    GraphicsPipeline* graphics_pipeline = nullptr;
+
     void Init();
     void Run();
     void Destroy();

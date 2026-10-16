@@ -8,6 +8,10 @@
 #include <map>
 #include <utility>
 
+Renderer::Renderer(Application* application) : application(application)
+{
+}
+
 void Renderer::CreateInstance()
 {
     vk::ApplicationInfo application_info
@@ -218,18 +222,18 @@ bool Renderer::IsDeviceSuitable(const vk::raii::PhysicalDevice& phys_device)
     std::vector available_device_extensions = phys_device.enumerateDeviceExtensionProperties();
 
     bool supports_required_extensions = std::ranges::all_of(required_device_extensions,
-                                                            [&available_device_extensions](
-                                                            auto const& required_device_extension)
-                                                            {
-                                                                return std::ranges::any_of(available_device_extensions,
-                                                                    [required_device_extension](
-                                                                    auto const& available_device_extension)
-                                                                    {
-                                                                        return strcmp(
-                                                                            available_device_extension.extensionName,
-                                                                            required_device_extension) == 0;
-                                                                    });
-                                                            });
+        [&available_device_extensions](
+        auto const& required_device_extension)
+        {
+            return std::ranges::any_of(available_device_extensions,
+                [required_device_extension](
+                auto const& available_device_extension)
+                {
+                    return strcmp(
+                        available_device_extension.extensionName,
+                        required_device_extension) == 0;
+                });
+        });
 
     // Check if the physical device supports required features
     auto device_features = phys_device.getFeatures2<
@@ -249,17 +253,19 @@ bool Renderer::IsDeviceSuitable(const vk::raii::PhysicalDevice& phys_device)
 
 void Renderer::CreateLogicalDevice()
 {
+    auto& surface = application->surface->GetSurface();
+    
     // vk::PhysicalDeviceFeatures device_features;
 
     // Check if a queue supports graphics and surface
     std::vector queue_family_properties = physical_device.getQueueFamilyProperties();
     uint32_t queue_index = ~0;
-
+    
     for (uint32_t i = 0; i < queue_family_properties.size(); i++)
     {
         if (
             (queue_family_properties[i].queueFlags & vk::QueueFlagBits::eGraphics) &&
-            physical_device.getSurfaceSupportKHR(i, *surface)
+            physical_device.getSurfaceSupportKHR(i, surface)
         )
         {
             queue_index = i;
@@ -316,15 +322,15 @@ void Renderer::CreateLogicalDevice()
 
 vk::raii::Instance& Renderer::GetInstance()
 {
-    return Get()->instance;
+    return instance;
 }
 
 vk::raii::PhysicalDevice& Renderer::GetPhysicalDevice()
 {
-    return Get()->physical_device;
+    return physical_device;
 }
 
 vk::raii::Device& Renderer::GetDevice()
 {
-    return Get()->device;
+    return device;
 }
