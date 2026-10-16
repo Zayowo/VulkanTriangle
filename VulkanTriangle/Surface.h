@@ -14,8 +14,11 @@ public:
     void CreateImageViews();
 
     vk::raii::SurfaceKHR& GetSurface();
+    vk::raii::SwapchainKHR& GetSwapChain();
     vk::Extent2D& GetSwapChainExtent();
     vk::SurfaceFormatKHR& GetSwapChainSurfaceFormat();
+    std::vector<vk::Image>& GetSwapChainImages();
+    std::vector<vk::raii::ImageView>& GetSwapChainImageViews();
 
 private:
     Application* application;

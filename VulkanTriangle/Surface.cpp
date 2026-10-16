@@ -9,7 +9,7 @@ Surface::Surface(Application* application) : application(application)
 
 void Surface::CreateSurface()
 {
-    const auto& instance = application->renderer->GetInstance();
+    const auto& instance = application->renderer.GetInstance();
     
     // Create a window surface on vkSurface
     // If when creating window surface result is 0, it means it's done well :>
@@ -25,8 +25,8 @@ void Surface::CreateSurface()
 
 void Surface::CreateSwapChain()
 {
-    const auto& physical_device = application->renderer->GetPhysicalDevice();
-    const auto& device = application->renderer->GetDevice();
+    const auto& physical_device = application->renderer.GetPhysicalDevice();
+    const auto& device = application->renderer.GetDevice();
     
     vk::SurfaceCapabilitiesKHR surface_capabilities = physical_device.getSurfaceCapabilitiesKHR(*surface);
     uint32_t min_image_count = ChooseSwapMinImageCount(surface_capabilities);
@@ -158,7 +158,7 @@ void Surface::CreateImageViews()
         .layerCount = 1
     };
 
-    auto& device = application->renderer->GetDevice();
+    auto& device = application->renderer.GetDevice();
     
     for (auto& image : swap_chain_images)
     {
@@ -172,6 +172,11 @@ vk::raii::SurfaceKHR& Surface::GetSurface()
     return surface;
 }
 
+vk::raii::SwapchainKHR& Surface::GetSwapChain()
+{
+    return swap_chain;
+}
+
 vk::Extent2D& Surface::GetSwapChainExtent()
 {
     return swap_chain_extent;
@@ -180,4 +185,14 @@ vk::Extent2D& Surface::GetSwapChainExtent()
 vk::SurfaceFormatKHR& Surface::GetSwapChainSurfaceFormat()
 {
     return swap_chain_surface_format;
+}
+
+std::vector<vk::Image>& Surface::GetSwapChainImages()
+{
+    return swap_chain_images;
+}
+
+std::vector<vk::raii::ImageView>& Surface::GetSwapChainImageViews()
+{
+    return swap_chain_image_views;
 }

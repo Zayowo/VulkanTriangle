@@ -1,6 +1,8 @@
 ﻿#pragma once
 
+#include "Buffer.h"
 #include "Dependencies.h"
+#include "Drawer.h"
 #include "GraphicsPipeline.h"
 #include "Renderer.h"
 #include "Surface.h"
@@ -8,14 +10,18 @@
 class Application
 {
 public:
+    Application();
+    
     int width = 800;
     int height = 600;
     GLFWwindow* window = nullptr;
     
     // Oui oui la crêperie :)
-    Renderer* renderer = nullptr;
-    Surface* surface = nullptr;
-    GraphicsPipeline* graphics_pipeline = nullptr;
+    Renderer renderer;
+    Surface surface;
+    GraphicsPipeline graphics_pipeline;
+    Buffer buffer;
+    Drawer drawer;
 
     void Init();
     void Run();

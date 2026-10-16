@@ -8,7 +8,10 @@ class GraphicsPipeline
 {
 public:
     GraphicsPipeline(Application*);
+    
     void CreateGraphicsPipeline();
+    
+    vk::raii::Pipeline& GetPipeline();
     
 private:
     Application* application;

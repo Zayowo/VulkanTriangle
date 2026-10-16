@@ -16,6 +16,8 @@ public:
     vk::raii::Instance& GetInstance();
     vk::raii::PhysicalDevice& GetPhysicalDevice();
     vk::raii::Device& GetDevice();
+    vk::raii::Queue& GetQueue();
+    uint32_t GetQueueIndex();
 
 private:
     Application* application;
@@ -26,7 +28,8 @@ private:
     vk::raii::PhysicalDevice physical_device = nullptr;
     vk::raii::Device device = nullptr;
     vk::raii::Queue queue = nullptr;
-
+    uint32_t queue_index = ~0;
+    
     std::vector<const char*> GetRequiredDeviceExtensions();
     std::vector<const char*> GetRequiredExtensions();
     std::vector<const char*> GetRequiredLayers();

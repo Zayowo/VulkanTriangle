@@ -10,9 +10,9 @@ GraphicsPipeline::GraphicsPipeline(Application* application) : application(appli
 
 void GraphicsPipeline::CreateGraphicsPipeline()
 {
-    auto& device = application->renderer->GetDevice();
-    auto& swap_chain_extent = application->surface->GetSwapChainExtent();
-    auto& swap_chain_surface_format = application->surface->GetSwapChainSurfaceFormat();
+    auto& device = application->renderer.GetDevice();
+    auto& swap_chain_extent = application->surface.GetSwapChainExtent();
+    auto& swap_chain_surface_format = application->surface.GetSwapChainSurfaceFormat();
     
     auto shader_code = Utils::ReadFile("shaders/slang.spv");
     vk::raii::ShaderModule shader_module = CreateShaderModule(shader_code);
@@ -146,7 +146,7 @@ void GraphicsPipeline::CreateGraphicsPipeline()
 [[nodiscard]]
 vk::raii::ShaderModule GraphicsPipeline::CreateShaderModule(const std::vector<char>& code) const
 {
-    auto& device = application->renderer->GetDevice();
+    auto& device = application->renderer.GetDevice();
     
     // Make the shader module create info
     vk::ShaderModuleCreateInfo shader_module_create_info
@@ -158,4 +158,9 @@ vk::raii::ShaderModule GraphicsPipeline::CreateShaderModule(const std::vector<ch
     // Construct the shader module with the device and create info
     vk::raii::ShaderModule shader_module(device, shader_module_create_info);
     return shader_module;
+}
+    
+vk::raii::Pipeline& GraphicsPipeline::GetPipeline()
+{
+    return pipeline;
 }

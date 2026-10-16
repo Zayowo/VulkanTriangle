@@ -2,7 +2,6 @@
 
 #include "Application.h"
 #include "Debug.h"
-#include "Utils.h"
 
 #include <iostream>
 #include <map>
@@ -253,13 +252,13 @@ bool Renderer::IsDeviceSuitable(const vk::raii::PhysicalDevice& phys_device)
 
 void Renderer::CreateLogicalDevice()
 {
-    auto& surface = application->surface->GetSurface();
+    auto& surface = application->surface.GetSurface();
     
     // vk::PhysicalDeviceFeatures device_features;
 
     // Check if a queue supports graphics and surface
     std::vector queue_family_properties = physical_device.getQueueFamilyProperties();
-    uint32_t queue_index = ~0;
+    // queue_index is a field
     
     for (uint32_t i = 0; i < queue_family_properties.size(); i++)
     {
@@ -292,7 +291,10 @@ void Renderer::CreateLogicalDevice()
     {
         {},
         {.shaderDrawParameters = true},
-        {.dynamicRendering = true},
+        {
+            .synchronization2 = true,
+            .dynamicRendering = true
+            },
         {.extendedDynamicState = true}
     };
 
@@ -333,4 +335,14 @@ vk::raii::PhysicalDevice& Renderer::GetPhysicalDevice()
 vk::raii::Device& Renderer::GetDevice()
 {
     return device;
+}
+
+vk::raii::Queue& Renderer::GetQueue()
+{
+    return queue;
+}
+
+uint32_t Renderer::GetQueueIndex()
+{
+    return queue_index;
 }

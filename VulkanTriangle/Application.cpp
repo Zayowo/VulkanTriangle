@@ -1,6 +1,11 @@
 ﻿#include "Application.h"
 
+#include "Buffer.h"
 #include "Renderer.h"
+
+Application::Application() : renderer(this), surface(this), graphics_pipeline(this), buffer(this), drawer(this)
+{
+}
 
 void Application::Init()
 {
@@ -13,6 +18,7 @@ void Application::Run()
     while (!glfwWindowShouldClose(window))
     {
         glfwPollEvents();
+        drawer.DrawFrame();
     }
 }
 
@@ -34,20 +40,23 @@ void Application::InitWindow()
 
 void Application::InitVulkan()
 {
-    renderer = new Renderer(this);
-    surface = new Surface(this);
-    graphics_pipeline = new GraphicsPipeline(this);
+    // Setup
+    renderer.CreateInstance();
+    surface.CreateSurface();
+    renderer.PickPhysicalDevice();
+    renderer.CreateLogicalDevice();
     
-    renderer->CreateInstance();
-    surface->CreateSurface();
+    // Presentation
+    surface.CreateSwapChain();
+    surface.CreateImageViews();
     
-    renderer->PickPhysicalDevice();
-    renderer->CreateLogicalDevice();
+    // Graphics pipeline
+    graphics_pipeline.CreateGraphicsPipeline();
     
-    surface->CreateSwapChain();
-    surface->CreateImageViews();
-    
-    graphics_pipeline->CreateGraphicsPipeline();
+    // Drawing
+    buffer.CreateCommandPool();
+    buffer.CreateCommandBuffer();
+    drawer.CreateSyncObjects();
 }
 
 void Application::DestroyWindow()
