@@ -152,7 +152,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Application.cpp" />
-    <ClCompile Include="Buffer.cpp" />
     <ClCompile Include="Debug.cpp" />
     <ClCompile Include="Drawer.cpp" />
     <ClCompile Include="GraphicsPipeline.cpp" />
@@ -163,7 +162,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application.h" />
-    <ClInclude Include="Buffer.h" />
     <ClInclude Include="Debug.h" />
     <ClInclude Include="Dependencies.h" />
     <ClInclude Include="Drawer.h" />
@@ -171,6 +169,7 @@
     <ClInclude Include="Renderer.h" />
     <ClInclude Include="Surface.h" />
     <ClInclude Include="Utils.h" />
+    <ClInclude Include="Vertex.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

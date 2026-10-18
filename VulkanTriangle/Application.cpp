@@ -1,9 +1,8 @@
 ﻿#include "Application.h"
 
-#include "Buffer.h"
 #include "Renderer.h"
 
-Application::Application() : renderer(this), surface(this), graphics_pipeline(this), buffer(this), drawer(this)
+Application::Application() : renderer(this), surface(this), graphics_pipeline(this), drawer(this)
 {
 }
 
@@ -20,6 +19,8 @@ void Application::Run()
         glfwPollEvents();
         drawer.DrawFrame();
     }
+    
+    renderer.GetDevice().waitIdle();
 }
 
 void Application::Destroy()
@@ -54,8 +55,8 @@ void Application::InitVulkan()
     graphics_pipeline.CreateGraphicsPipeline();
     
     // Drawing
-    buffer.CreateCommandPool();
-    buffer.CreateCommandBuffer();
+    drawer.CreateCommandPool();
+    drawer.CreateCommandBuffers();
     drawer.CreateSyncObjects();
 }
 

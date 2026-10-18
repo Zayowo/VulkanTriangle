@@ -3,6 +3,7 @@
 #include "Application.h"
 #include "Renderer.h"
 #include "Utils.h"
+#include "Vertex.h"
 
 GraphicsPipeline::GraphicsPipeline(Application* application) : application(application)
 {
@@ -45,7 +46,16 @@ void GraphicsPipeline::CreateGraphicsPipeline()
     };
     
     // Make the pipeline vertex input create info
-    vk::PipelineVertexInputStateCreateInfo vertex_input_create_info;
+    auto binding_description = Vertex::GetBindingDescription();
+    auto attribute_descriptions = Vertex::GetAttributeDescriptions();
+    
+    vk::PipelineVertexInputStateCreateInfo vertex_input_create_info
+    {
+        .vertexBindingDescriptionCount = 1,
+        .pVertexBindingDescriptions = &binding_description,
+        .vertexAttributeDescriptionCount = static_cast<uint32_t>(attribute_descriptions.size()),
+        .pVertexAttributeDescriptions = attribute_descriptions.data()
+    };
     
     // Make the pipeline input assembly create info
     vk::PipelineInputAssemblyStateCreateInfo input_assembly_create_info

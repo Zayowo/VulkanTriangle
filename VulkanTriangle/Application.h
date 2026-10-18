@@ -1,6 +1,5 @@
 ﻿#pragma once
 
-#include "Buffer.h"
 #include "Dependencies.h"
 #include "Drawer.h"
 #include "GraphicsPipeline.h"
@@ -20,7 +19,6 @@ public:
     Renderer renderer;
     Surface surface;
     GraphicsPipeline graphics_pipeline;
-    Buffer buffer;
     Drawer drawer;
 
     void Init();
