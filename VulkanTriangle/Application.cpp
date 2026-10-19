@@ -56,6 +56,7 @@ void Application::InitVulkan()
     
     // Drawing
     drawer.CreateCommandPool();
+    drawer.CreateVertexBuffer();
     drawer.CreateCommandBuffers();
     drawer.CreateSyncObjects();
 }

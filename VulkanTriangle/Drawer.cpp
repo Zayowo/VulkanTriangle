@@ -1,6 +1,7 @@
 ﻿#include "Drawer.h"
 
 #include "Application.h"
+#include "Vertex.h"
 
 constexpr int MAX_FRAMES_IN_FLIGHT = 2;
 
@@ -29,6 +30,38 @@ void Drawer::CreateCommandBuffers()
     };
     
     command_buffers = vk::raii::CommandBuffers(application->renderer.GetDevice(), command_buffer_allocate_info);
+}
+
+void Drawer::CreateVertexBuffer()
+{
+    auto& device = application->renderer.GetDevice();
+    
+    // Create the vertex buffer for the provided vertices
+    vk::BufferCreateInfo buffer_create_info
+    {
+        .size = sizeof(vertices[0]) * vertices.size(),
+        .usage = vk::BufferUsageFlagBits::eVertexBuffer,
+        .sharingMode = vk::SharingMode::eExclusive
+    };
+    
+    vertex_buffer = vk::raii::Buffer(device, buffer_create_info);
+    
+    // Check the memory requirements of the vertex buffer
+    vk::MemoryRequirements memory_requirements = vertex_buffer.getMemoryRequirements();
+    vk::MemoryAllocateInfo memory_allocate_info
+    {
+        .allocationSize = memory_requirements.size,
+        .memoryTypeIndex = FindMemoryType(memory_requirements.memoryTypeBits, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent)
+    };
+    
+    vertex_buffer_memory = vk::raii::DeviceMemory(device, memory_allocate_info);
+    
+    // Bind the vertex memory to the vertex buffer
+    vertex_buffer.bindMemory(*vertex_buffer_memory, 0);
+    
+    void* data = vertex_buffer_memory.mapMemory(0, buffer_create_info.size);
+    memcpy(data, vertices.data(), buffer_create_info.size);
+    vertex_buffer_memory.unmapMemory();
 }
 
 void Drawer::CreateSyncObjects()
@@ -155,6 +188,8 @@ void Drawer::RecordCommandBuffer(uint32_t image_index)
     // Bind the command buffer to the graphics pipeline
     command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *application->graphics_pipeline.GetPipeline());
     
+    command_buffer.bindVertexBuffers(0, *vertex_buffer, {0});
+    
     // The viewport and scissor is defined as dynamic, so we have to set/update them
     command_buffer.setViewport(0, vk::Viewport(0.f, 0.f,
         static_cast<float>(swap_chain_extent.width), static_cast<float>(swap_chain_extent.height),
@@ -162,7 +197,7 @@ void Drawer::RecordCommandBuffer(uint32_t image_index)
     command_buffer.setScissor(0, vk::Rect2D(vk::Offset2D(0, 0), swap_chain_extent));
     
     // Readying up the command buffer to draw :)
-    command_buffer.draw(3, 1, 0, 0);
+    command_buffer.draw(static_cast<uint32_t>(vertices.size()), 1, 0, 0);
     
     // Will end the rendering of the command buffer
     command_buffer.endRendering();
@@ -221,4 +256,23 @@ void Drawer::TransitionImageLayout(
     };
     
     command_buffers[frame_index].pipelineBarrier2(dependency_info);
+}
+
+uint32_t Drawer::FindMemoryType(uint32_t type_filter, vk::MemoryPropertyFlags properties)
+{
+    auto& physical_device = application->renderer.GetPhysicalDevice();
+    vk::PhysicalDeviceMemoryProperties memory_properties = physical_device.getMemoryProperties();
+    
+    for (uint32_t i = 0; i < memory_properties.memoryTypeCount; i++)
+    {
+        if (
+            (type_filter & (1 << i)) &&
+            (memory_properties.memoryTypes[i].propertyFlags & properties) == properties
+        )
+        {
+            return i;
+        }
+    }
+    
+    throw std::runtime_error("Failed to find suitable memory type!");
 }

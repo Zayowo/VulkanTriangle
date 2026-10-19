@@ -47,3 +47,10 @@ struct Vertex
         };
     }
 };
+
+const std::vector<Vertex> vertices = 
+{
+    {0.f, -0.5f, 1.f, 1.f, 1.f},
+    {0.5f, 0.5f, 0.f, 1.f, 0.f},
+    {-0.5f, 0.5f, 0.f, 0.f, 1.f}
+};
