@@ -1,20 +1,11 @@
 ﻿#pragma once
 #include <vulkan/vulkan.hpp>
-
-struct Vector2
-{
-    float x, y = 0.f;
-};
-
-struct Vector3
-{
-    float x, y, z = 0.f;
-};
+#include <glm/glm.hpp>
 
 struct Vertex
 {
-    Vector2 pos;
-    Vector3 color;
+    glm::vec2 pos;
+    glm::vec3 color;
     
     static vk::VertexInputBindingDescription GetBindingDescription()
     {
@@ -50,10 +41,10 @@ struct Vertex
 
 const std::vector<Vertex> vertices = 
 {
-    {-0.5f, -0.5f, {1.f, 0.f, 0.f}},
-    {0.5f, -0.5f, {0.f, 1.f, 0.f}},
+    {{-0.5f, -0.5f}, {1.f, 0.f, 0.f}},
+    {{0.5f, -0.5f}, {0.f, 1.f, 0.f}},
     {{0.5f, 0.5f}, {0.f, 0.f, 1.f}},
-    {-0.5f, 0.5f, {1.f, 1.f, 1.f}}
+    {{-0.5f, 0.5f}, {1.f, 1.f, 1.f}}
 };
 
 const std::vector<uint16_t> indices =

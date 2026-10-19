@@ -34,9 +34,11 @@ void Application::InitWindow()
     glfwInit();
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+    glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 
     window = glfwCreateWindow(width, height, "Vulkan Triangle", nullptr, nullptr);
+    glfwSetWindowUserPointer(window, this);
+    glfwSetFramebufferSizeCallback(window, Drawer::FramebufferResizeCallback);
 }
 
 void Application::InitVulkan()
@@ -71,4 +73,5 @@ void Application::DestroyWindow()
 
 void Application::DestroyVulkan()
 {
+    surface.CleanupSwapChain();
 }

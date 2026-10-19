@@ -167,6 +167,41 @@ void Surface::CreateImageViews()
     }
 }
 
+void Surface::CleanupSwapChain()
+{
+    swap_chain_image_views.clear();
+    swap_chain = nullptr;
+}
+
+void Surface::RecreateSwapChain()
+{
+    int width = 0;
+    int height = 0;
+    
+    glfwGetFramebufferSize(application->window, &width, &height);
+    
+    while ((width == 0 || height == 0) && !glfwWindowShouldClose(application->window))
+    {
+        glfwGetFramebufferSize(application->window, &width, &height);
+        glfwWaitEvents();
+    }
+    
+    if (glfwWindowShouldClose(application->window))
+    {
+        return;
+    }
+    
+    // Wait until device is on idle
+    application->renderer.GetDevice().waitIdle();
+    
+    // Cleanup previous swap chain
+    CleanupSwapChain();
+    
+    // Make a new swap chain
+    CreateSwapChain();
+    CreateImageViews();
+}
+
 vk::raii::SurfaceKHR& Surface::GetSurface()
 {
     return surface;

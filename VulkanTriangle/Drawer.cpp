@@ -89,21 +89,35 @@ void Drawer::CreateSyncObjects()
 
 void Drawer::DrawFrame()
 {
-    // Wait for the draw fences
+    // Wait for the draw fences and check its result
     auto& device = application->renderer.GetDevice();
     auto fence_result = device.waitForFences(*in_flight_fences[frame_index], vk::True, UINT64_MAX);
     
-    // Check if fence succeeded or not
     if (fence_result != vk::Result::eSuccess)
     {
         throw std::runtime_error("Failed to wait for fence!");
     }
     
-    // Reset the fences!!
-    device.resetFences(*in_flight_fences[frame_index]);
-    
+    // Get the next image of the swap chain and check the result of it
     auto& swap_chain = application->surface.GetSwapChain();
     auto [result, image_index] = swap_chain.acquireNextImage(UINT64_MAX, *present_complete_semaphores[frame_index], nullptr);
+    
+    // If the next image result is out of date, recreate a swap chain
+    if (result == vk::Result::eErrorOutOfDateKHR || result == vk::Result::eSuboptimalKHR || is_framebuffer_resized)
+    {
+        is_framebuffer_resized = false;
+        application->surface.RecreateSwapChain();
+        return;
+    }
+    
+    if (result != vk::Result::eSuccess)
+    {
+        assert(result == vk::Result::eTimeout || result == vk::Result::eNotReady);
+        throw std::runtime_error("Failed to acquire swap chain image!");
+    }
+    
+    // Reset the fences!!
+    device.resetFences(*in_flight_fences[frame_index]);
     
     // Send the next image of the swap chain to the command buffer
     RecordCommandBuffer(image_index);
@@ -137,8 +151,26 @@ void Drawer::DrawFrame()
     
     result = application->renderer.GetQueue().presentKHR(present_info);
     
+    // Check the result and see if a swap chain needs to be recreated
+    if ((result == vk::Result::eSuboptimalKHR) || (result == vk::Result::eErrorOutOfDateKHR))
+    {
+        application->surface.RecreateSwapChain();
+    }
+    
+    // Just a final check :)
+    else
+    {
+        assert(result == vk::Result::eSuccess);
+    }
+    
     // Advance to the next frame after we finish this one
     frame_index = (frame_index + 1) % MAX_FRAMES_IN_FLIGHT;
+}
+
+void Drawer::FramebufferResizeCallback(GLFWwindow* window, int height, int width)
+{
+    auto application = reinterpret_cast<Application*>(glfwGetWindowUserPointer(window));
+    application->drawer.is_framebuffer_resized = true;
 }
 
 void Drawer::RecordCommandBuffer(uint32_t image_index)

@@ -13,6 +13,9 @@ public:
     void CreateSwapChain();
     void CreateImageViews();
 
+    void CleanupSwapChain();
+    void RecreateSwapChain();
+
     vk::raii::SurfaceKHR& GetSurface();
     vk::raii::SwapchainKHR& GetSwapChain();
     vk::Extent2D& GetSwapChainExtent();

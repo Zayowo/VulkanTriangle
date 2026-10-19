@@ -18,7 +18,12 @@ public:
     
     void DrawFrame();
     
+    // Internal method used by GLFW when window is resized :)
+    static void FramebufferResizeCallback(GLFWwindow*, int, int);
+    
 private:
+    bool is_framebuffer_resized = false;
+    
     vk::raii::CommandPool command_pool = nullptr;
     std::vector<vk::raii::CommandBuffer> command_buffers;
     
