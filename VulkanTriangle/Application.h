@@ -11,8 +11,8 @@ class Application
 public:
     Application();
     
-    int width = 800;
-    int height = 600;
+    int width = 1000;
+    int height = 1000;
     GLFWwindow* window = nullptr;
     
     // Oui oui la crêperie :)

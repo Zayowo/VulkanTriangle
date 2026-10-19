@@ -34,34 +34,38 @@ void Drawer::CreateCommandBuffers()
 
 void Drawer::CreateVertexBuffer()
 {
-    auto& device = application->renderer.GetDevice();
+    // Get the size necessary for the vertex buffer
+    vk::DeviceSize buffer_size = sizeof(vertices[0]) * vertices.size();
     
-    // Create the vertex buffer for the provided vertices
-    vk::BufferCreateInfo buffer_create_info
-    {
-        .size = sizeof(vertices[0]) * vertices.size(),
-        .usage = vk::BufferUsageFlagBits::eVertexBuffer,
-        .sharingMode = vk::SharingMode::eExclusive
-    };
+    // Create the staging vertex buffer
+    auto [staging_buffer, staging_buffer_memory] = CreateBuffer(buffer_size, vk::BufferUsageFlagBits::eTransferSrc, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
     
-    vertex_buffer = vk::raii::Buffer(device, buffer_create_info);
+    // Map memory, something I guess
+    void* data_staging = staging_buffer_memory.mapMemory(0, buffer_size);
+    memcpy(data_staging, vertices.data(), buffer_size);
+    staging_buffer_memory.unmapMemory();
     
-    // Check the memory requirements of the vertex buffer
-    vk::MemoryRequirements memory_requirements = vertex_buffer.getMemoryRequirements();
-    vk::MemoryAllocateInfo memory_allocate_info
-    {
-        .allocationSize = memory_requirements.size,
-        .memoryTypeIndex = FindMemoryType(memory_requirements.memoryTypeBits, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent)
-    };
+    std::tie(vertex_buffer, vertex_buffer_memory) = CreateBuffer(buffer_size, vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eTransferDst, vk::MemoryPropertyFlagBits::eDeviceLocal);
     
-    vertex_buffer_memory = vk::raii::DeviceMemory(device, memory_allocate_info);
+    CopyBuffer(staging_buffer, vertex_buffer, buffer_size);
+}
+
+void Drawer::CreateIndexBuffer()
+{
+    // Get the size necessary for the index buffer
+    vk::DeviceSize buffer_size = sizeof(indices[0]) * indices.size();
     
-    // Bind the vertex memory to the vertex buffer
-    vertex_buffer.bindMemory(*vertex_buffer_memory, 0);
+    // Create the staging index buffer
+    auto [staging_buffer, staging_buffer_memory] = CreateBuffer(buffer_size, vk::BufferUsageFlagBits::eTransferSrc, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
     
-    void* data = vertex_buffer_memory.mapMemory(0, buffer_create_info.size);
-    memcpy(data, vertices.data(), buffer_create_info.size);
-    vertex_buffer_memory.unmapMemory();
+    // Map memory, something I guess
+    void* data = staging_buffer_memory.mapMemory(0, buffer_size);
+    memcpy(data, indices.data(), (size_t)buffer_size);
+    staging_buffer_memory.unmapMemory();
+    
+    std::tie(index_buffer, index_buffer_memory) = CreateBuffer(buffer_size, vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eTransferDst, vk::MemoryPropertyFlagBits::eDeviceLocal);
+    
+    CopyBuffer(staging_buffer, index_buffer, buffer_size);
 }
 
 void Drawer::CreateSyncObjects()
@@ -185,10 +189,10 @@ void Drawer::RecordCommandBuffer(uint32_t image_index)
     // Will begin the rendering of the command buffer
     command_buffer.beginRendering(rendering_info);
     
-    // Bind the command buffer to the graphics pipeline
+    // Bind a lot of stuff to the command buffer so it works properly
     command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *application->graphics_pipeline.GetPipeline());
-    
     command_buffer.bindVertexBuffers(0, *vertex_buffer, {0});
+    command_buffer.bindIndexBuffer(*index_buffer, 0, vk::IndexType::eUint16);
     
     // The viewport and scissor is defined as dynamic, so we have to set/update them
     command_buffer.setViewport(0, vk::Viewport(0.f, 0.f,
@@ -197,7 +201,8 @@ void Drawer::RecordCommandBuffer(uint32_t image_index)
     command_buffer.setScissor(0, vk::Rect2D(vk::Offset2D(0, 0), swap_chain_extent));
     
     // Readying up the command buffer to draw :)
-    command_buffer.draw(static_cast<uint32_t>(vertices.size()), 1, 0, 0);
+    // command_buffer.draw(static_cast<uint32_t>(vertices.size()), 1, 0, 0);
+    command_buffer.drawIndexed(static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
     
     // Will end the rendering of the command buffer
     command_buffer.endRendering();
@@ -256,6 +261,62 @@ void Drawer::TransitionImageLayout(
     };
     
     command_buffers[frame_index].pipelineBarrier2(dependency_info);
+}
+
+std::pair<vk::raii::Buffer, vk::raii::DeviceMemory> Drawer::CreateBuffer(vk::DeviceSize size, vk::BufferUsageFlags usage, vk::MemoryPropertyFlags properties)
+{
+    auto& device = application->renderer.GetDevice();
+    
+    // Define the info of the buffer and create it
+    vk::BufferCreateInfo buffer_create_info =
+    {
+        .size = size,
+        .usage = usage,
+        .sharingMode = vk::SharingMode::eExclusive
+    };
+    
+    vk::raii::Buffer buffer = vk::raii::Buffer(device, buffer_create_info);
+    
+    // Get the memory requirements of the buffer and the allocate info for the buffer
+    vk::MemoryRequirements memory_requirements = buffer.getMemoryRequirements();
+    
+    vk::MemoryAllocateInfo memory_allocate_info =
+    {
+        .allocationSize = memory_requirements.size,
+        .memoryTypeIndex =  FindMemoryType(memory_requirements.memoryTypeBits, properties)
+    };
+    
+    vk::raii::DeviceMemory buffer_memory = vk::raii::DeviceMemory(device, memory_allocate_info);
+    
+    // Bind the allocated buffer memory to the buffer
+    buffer.bindMemory(*buffer_memory, 0);
+    
+    return {
+        std::move(buffer),
+        std::move(buffer_memory)
+    };
+}
+
+void Drawer::CopyBuffer(vk::raii::Buffer& src_buffer, vk::raii::Buffer& dst_buffer, vk::DeviceSize size)
+{
+    auto& device = application->renderer.GetDevice();
+    auto& queue = application->renderer.GetQueue();
+    
+    vk::CommandBufferAllocateInfo allocate_info
+    {
+        .commandPool = command_pool,
+        .level = vk::CommandBufferLevel::ePrimary,
+        .commandBufferCount = 1
+    };
+    
+    vk::raii::CommandBuffer command_copy_buffer = std::move(device.allocateCommandBuffers(allocate_info).front());
+    
+    command_copy_buffer.begin({.flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit});
+    command_copy_buffer.copyBuffer(*src_buffer, *dst_buffer, vk::BufferCopy(0, 0, size));
+    command_copy_buffer.end();
+    
+    queue.submit(vk::SubmitInfo{.commandBufferCount = 1, .pCommandBuffers = &*command_copy_buffer}, nullptr);
+    queue.waitIdle();
 }
 
 uint32_t Drawer::FindMemoryType(uint32_t type_filter, vk::MemoryPropertyFlags properties)

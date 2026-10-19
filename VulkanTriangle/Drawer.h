@@ -13,6 +13,7 @@ public:
     void CreateCommandPool();
     void CreateCommandBuffers();
     void CreateVertexBuffer();
+    void CreateIndexBuffer();
     void CreateSyncObjects();
     
     void DrawFrame();
@@ -23,6 +24,8 @@ private:
     
     vk::raii::Buffer vertex_buffer = nullptr;
     vk::raii::DeviceMemory vertex_buffer_memory = nullptr;
+    vk::raii::Buffer index_buffer = nullptr;
+    vk::raii::DeviceMemory index_buffer_memory = nullptr;
     
     std::vector<vk::raii::Semaphore> present_complete_semaphores;
     std::vector<vk::raii::Semaphore> render_finished_semaphores;
@@ -40,7 +43,9 @@ private:
         vk::PipelineStageFlags2
     );
     
-    // Vertex Buffer
+    // Vertex Buffers
+    std::pair<vk::raii::Buffer, vk::raii::DeviceMemory> CreateBuffer(vk::DeviceSize, vk::BufferUsageFlags, vk::MemoryPropertyFlags);
+    void CopyBuffer(vk::raii::Buffer&, vk::raii::Buffer&, vk::DeviceSize);
     uint32_t FindMemoryType(uint32_t, vk::MemoryPropertyFlags);
     
     // Refs
