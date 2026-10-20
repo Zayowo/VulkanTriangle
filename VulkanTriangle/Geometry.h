@@ -2,7 +2,7 @@
 #include <vulkan/vulkan.hpp>
 #include <glm/glm.hpp>
 
-struct Geometry
+struct Vertex
 {
     glm::vec2 pos;
     glm::vec3 color;
@@ -12,7 +12,7 @@ struct Geometry
         return
         {
             .binding = 0,
-            .stride = sizeof(Geometry),
+            .stride = sizeof(Vertex),
             .inputRate = vk::VertexInputRate::eVertex
         };
     }
@@ -26,13 +26,13 @@ struct Geometry
                     .location = 0,
                     .binding = 0,
                     .format = vk::Format::eR32G32Sfloat,
-                    .offset = offsetof(Geometry, pos)
+                    .offset = offsetof(Vertex, pos)
                 },
                 {
                     .location = 1,
                     .binding = 0,
                     .format = vk::Format::eR32G32B32Sfloat,
-                    .offset = offsetof(Geometry, color)
+                    .offset = offsetof(Vertex, color)
                 }
             }
         };
@@ -46,7 +46,7 @@ struct UniformBufferObject
     alignas(16) glm::mat4 proj;
 };
 
-const std::vector<Geometry> vertices = 
+const std::vector<Vertex> vertices = 
 {
     {{-0.5f, -0.5f}, {1.f, 0.f, 0.f}},
     {{0.5f, -0.5f}, {0.f, 1.f, 0.f}},

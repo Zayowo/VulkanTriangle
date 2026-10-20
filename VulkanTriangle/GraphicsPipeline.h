@@ -11,15 +11,21 @@ public:
     
     void CreateDescriptorSetLayout();
     void CreateGraphicsPipeline();
+    void CreateDescriptorPool();
+    void CreateDescriptorSets();
     
-    vk::raii::DescriptorSetLayout& GetDescriptorSetLayout();
     vk::raii::PipelineLayout& GetPipelineLayout();
     vk::raii::Pipeline& GetPipeline();
+    vk::raii::DescriptorSetLayout& GetDescriptorSetLayout();
+    std::vector<vk::raii::DescriptorSet>& GetDescriptorSets();
 
 private:
     Application* application;
     
     vk::raii::DescriptorSetLayout descriptor_set_layout = nullptr;
+    vk::raii::DescriptorPool descriptor_pool = nullptr;
+    std::vector<vk::raii::DescriptorSet> descriptor_sets;
+    
     vk::raii::PipelineLayout pipeline_layout = nullptr;
     vk::raii::Pipeline pipeline = nullptr;
     

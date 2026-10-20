@@ -2,7 +2,7 @@
 
 #include "Renderer.h"
 
-Application::Application() : renderer(this), surface(this), graphics_pipeline(this), drawer(this)
+Application::Application() : renderer(this), surface(this), graphics_pipeline(this), buffers(this), drawer(this)
 {
 }
 
@@ -57,16 +57,20 @@ void Application::InitVulkan()
     graphics_pipeline.CreateDescriptorSetLayout();
     graphics_pipeline.CreateGraphicsPipeline();
     
+    // Buffers
+    buffers.CreateCommandPool();
+    buffers.CreateVertexBuffer();
+    buffers.CreateIndexBuffer();
+    buffers.CreateUniformBuffers();
+
+    // Continue creating descriptor pool and sets on graphics pipeline
+    graphics_pipeline.CreateDescriptorPool();
+    graphics_pipeline.CreateDescriptorSets();
+    
+    // Finalize buffers by creating the command buffers
+    buffers.CreateCommandBuffers();
+    
     // Drawing
-    drawer.CreateCommandPool();
-    drawer.CreateVertexBuffer();
-    drawer.CreateIndexBuffer();
-    
-    drawer.CreateUniformBuffers();
-    drawer.CreateDescriptorPool();
-    drawer.CreateDescriptorSets();
-    
-    drawer.CreateCommandBuffers();
     drawer.CreateSyncObjects();
 }
 

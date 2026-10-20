@@ -65,8 +65,8 @@ void GraphicsPipeline::CreateGraphicsPipeline()
     };
     
     // Make the pipeline vertex input create info
-    auto binding_description = Geometry::GetBindingDescription();
-    auto attribute_descriptions = Geometry::GetAttributeDescriptions();
+    auto binding_description = Vertex::GetBindingDescription();
+    auto attribute_descriptions = Vertex::GetAttributeDescriptions();
     
     vk::PipelineVertexInputStateCreateInfo vertex_input_create_info
     {
@@ -172,6 +172,62 @@ void GraphicsPipeline::CreateGraphicsPipeline()
     pipeline = vk::raii::Pipeline(device, nullptr, pipeline_create_info.get<vk::GraphicsPipelineCreateInfo>());
 }
 
+
+void GraphicsPipeline::CreateDescriptorPool()
+{
+    vk::DescriptorPoolSize descriptor_pool_size
+    {
+        .type = vk::DescriptorType::eUniformBuffer,
+        .descriptorCount = MAX_FRAMES_IN_FLIGHT
+    };
+    
+    vk::DescriptorPoolCreateInfo descriptor_pool_create_info
+    {
+        .flags = vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet,
+        .maxSets = MAX_FRAMES_IN_FLIGHT,
+        .poolSizeCount = 1,
+        .pPoolSizes = &descriptor_pool_size
+    };
+    
+    descriptor_pool = vk::raii::DescriptorPool(application->renderer.GetDevice(), descriptor_pool_create_info);
+}
+
+void GraphicsPipeline::CreateDescriptorSets()
+{
+    std::vector<vk::DescriptorSetLayout> layouts(MAX_FRAMES_IN_FLIGHT, *application->graphics_pipeline.GetDescriptorSetLayout());
+    
+    vk::DescriptorSetAllocateInfo descriptor_set_allocate_info
+    {
+        .descriptorPool = descriptor_pool,
+        .descriptorSetCount = static_cast<uint32_t>(layouts.size()),
+        .pSetLayouts = layouts.data()
+    };
+
+    descriptor_sets = application->renderer.GetDevice().allocateDescriptorSets(descriptor_set_allocate_info);
+    
+    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+    {
+        vk::DescriptorBufferInfo descriptor_buffer_info
+        {
+            .buffer = application->buffers.GetUniformBuffers()[i],
+            .offset = 0,
+            .range = sizeof(UniformBufferObject)
+        };
+        
+        vk::WriteDescriptorSet descriptor_write
+        {
+            .dstSet = descriptor_sets[i],
+            .dstBinding = 0,
+            .dstArrayElement = 0,
+            .descriptorCount = 1,
+            .descriptorType = vk::DescriptorType::eUniformBuffer,
+            .pBufferInfo = &descriptor_buffer_info
+        };
+        
+        application->renderer.GetDevice().updateDescriptorSets(descriptor_write, {});
+    }
+}
+
 [[nodiscard]]
 vk::raii::ShaderModule GraphicsPipeline::CreateShaderModule(const std::vector<char>& code) const
 {
@@ -189,11 +245,6 @@ vk::raii::ShaderModule GraphicsPipeline::CreateShaderModule(const std::vector<ch
     return shader_module;
 }
 
-vk::raii::DescriptorSetLayout& GraphicsPipeline::GetDescriptorSetLayout()
-{
-    return descriptor_set_layout;
-}
-
 vk::raii::PipelineLayout& GraphicsPipeline::GetPipelineLayout()
 {
     return pipeline_layout;
@@ -202,4 +253,14 @@ vk::raii::PipelineLayout& GraphicsPipeline::GetPipelineLayout()
 vk::raii::Pipeline& GraphicsPipeline::GetPipeline()
 {
     return pipeline;
+}
+
+vk::raii::DescriptorSetLayout& GraphicsPipeline::GetDescriptorSetLayout()
+{
+    return descriptor_set_layout;
+}
+
+std::vector<vk::raii::DescriptorSet>& GraphicsPipeline::GetDescriptorSets()
+{
+    return descriptor_sets;
 }
