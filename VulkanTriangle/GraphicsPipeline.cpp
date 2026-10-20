@@ -3,10 +3,29 @@
 #include "Application.h"
 #include "Renderer.h"
 #include "Utils.h"
-#include "Vertex.h"
+#include "Geometry.h"
 
 GraphicsPipeline::GraphicsPipeline(Application* application) : application(application)
 {
+}
+
+void GraphicsPipeline::CreateDescriptorSetLayout()
+{
+    vk::DescriptorSetLayoutBinding ubo_layout_binding
+    {
+        .binding = 0,
+        .descriptorType = vk::DescriptorType::eUniformBuffer,
+        .descriptorCount = 1,
+        .stageFlags = vk::ShaderStageFlagBits::eVertex
+    };
+    
+    vk::DescriptorSetLayoutCreateInfo ubo_layout_create_info
+    {
+        .bindingCount = 1,
+        .pBindings = &ubo_layout_binding
+    };
+    
+    descriptor_set_layout = vk::raii::DescriptorSetLayout(application->renderer.GetDevice(), ubo_layout_create_info);
 }
 
 void GraphicsPipeline::CreateGraphicsPipeline()
@@ -46,8 +65,8 @@ void GraphicsPipeline::CreateGraphicsPipeline()
     };
     
     // Make the pipeline vertex input create info
-    auto binding_description = Vertex::GetBindingDescription();
-    auto attribute_descriptions = Vertex::GetAttributeDescriptions();
+    auto binding_description = Geometry::GetBindingDescription();
+    auto attribute_descriptions = Geometry::GetAttributeDescriptions();
     
     vk::PipelineVertexInputStateCreateInfo vertex_input_create_info
     {
@@ -82,7 +101,7 @@ void GraphicsPipeline::CreateGraphicsPipeline()
         .rasterizerDiscardEnable = vk::False,
         .polygonMode = vk::PolygonMode::eFill,
         .cullMode = vk::CullModeFlagBits::eBack,
-        .frontFace = vk::FrontFace::eClockwise,
+        .frontFace = vk::FrontFace::eCounterClockwise,
         .depthBiasEnable = vk::False,
         .lineWidth = 1.f
     };
@@ -118,8 +137,8 @@ void GraphicsPipeline::CreateGraphicsPipeline()
     // Make the pipeline layout create info, and get the final pipeline layout from it
     vk::PipelineLayoutCreateInfo pipeline_layout_create_info
     {
-        .setLayoutCount = 0,
-        //.pSetLayouts = ,
+        .setLayoutCount = 1,
+        .pSetLayouts = &*descriptor_set_layout,
         .pushConstantRangeCount = 0,
         //.pPushConstantRanges = 
     };
@@ -169,7 +188,17 @@ vk::raii::ShaderModule GraphicsPipeline::CreateShaderModule(const std::vector<ch
     vk::raii::ShaderModule shader_module(device, shader_module_create_info);
     return shader_module;
 }
-    
+
+vk::raii::DescriptorSetLayout& GraphicsPipeline::GetDescriptorSetLayout()
+{
+    return descriptor_set_layout;
+}
+
+vk::raii::PipelineLayout& GraphicsPipeline::GetPipelineLayout()
+{
+    return pipeline_layout;
+}
+
 vk::raii::Pipeline& GraphicsPipeline::GetPipeline()
 {
     return pipeline;

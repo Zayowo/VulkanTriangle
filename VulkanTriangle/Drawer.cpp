@@ -1,9 +1,13 @@
 ﻿#include "Drawer.h"
 
 #include "Application.h"
-#include "Vertex.h"
+#include "Geometry.h"
 
-constexpr int MAX_FRAMES_IN_FLIGHT = 2;
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <chrono>
+
+#include "Utils.h"
 
 Drawer::Drawer(Application* application) : application(application)
 {
@@ -68,6 +72,74 @@ void Drawer::CreateIndexBuffer()
     CopyBuffer(staging_buffer, index_buffer, buffer_size);
 }
 
+void Drawer::CreateUniformBuffers()
+{
+    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+    {
+        vk::DeviceSize buffer_size = sizeof(UniformBufferObject);
+        auto [buffer, buffer_memory] = CreateBuffer(buffer_size, vk::BufferUsageFlagBits::eUniformBuffer, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
+        
+        uniform_buffers.emplace_back(std::move(buffer));
+        uniform_buffers_memory.emplace_back(std::move(buffer_memory));
+        uniform_buffers_mapped.emplace_back(uniform_buffers_memory.back().mapMemory(0, buffer_size));
+    }
+}
+
+void Drawer::CreateDescriptorPool()
+{
+    vk::DescriptorPoolSize descriptor_pool_size
+    {
+        .type = vk::DescriptorType::eUniformBuffer,
+        .descriptorCount = MAX_FRAMES_IN_FLIGHT
+    };
+    
+    vk::DescriptorPoolCreateInfo descriptor_pool_create_info
+    {
+        .flags = vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet,
+        .maxSets = MAX_FRAMES_IN_FLIGHT,
+        .poolSizeCount = 1,
+        .pPoolSizes = &descriptor_pool_size
+    };
+    
+    descriptor_pool = vk::raii::DescriptorPool(application->renderer.GetDevice(), descriptor_pool_create_info);
+}
+
+void Drawer::CreateDescriptorSets()
+{
+    std::vector<vk::DescriptorSetLayout> layouts(MAX_FRAMES_IN_FLIGHT, *application->graphics_pipeline.GetDescriptorSetLayout());
+    
+    vk::DescriptorSetAllocateInfo descriptor_set_allocate_info
+    {
+        .descriptorPool = descriptor_pool,
+        .descriptorSetCount = static_cast<uint32_t>(layouts.size()),
+        .pSetLayouts = layouts.data()
+    };
+
+    descriptor_sets = application->renderer.GetDevice().allocateDescriptorSets(descriptor_set_allocate_info);
+    
+    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+    {
+        vk::DescriptorBufferInfo descriptor_buffer_info
+        {
+            .buffer = uniform_buffers[i],
+            .offset = 0,
+            .range = sizeof(UniformBufferObject)
+        };
+        
+        vk::WriteDescriptorSet descriptor_write
+        {
+            .dstSet = descriptor_sets[i],
+            .dstBinding = 0,
+            .dstArrayElement = 0,
+            .descriptorCount = 1,
+            .descriptorType = vk::DescriptorType::eUniformBuffer,
+            .pBufferInfo = &descriptor_buffer_info
+        };
+        
+        application->renderer.GetDevice().updateDescriptorSets(descriptor_write, {});
+    }
+}
+
 void Drawer::CreateSyncObjects()
 {
     auto& device = application->renderer.GetDevice();
@@ -102,15 +174,7 @@ void Drawer::DrawFrame()
     auto& swap_chain = application->surface.GetSwapChain();
     auto [result, image_index] = swap_chain.acquireNextImage(UINT64_MAX, *present_complete_semaphores[frame_index], nullptr);
     
-    // If the next image result is out of date, recreate a swap chain
-    if (result == vk::Result::eErrorOutOfDateKHR || result == vk::Result::eSuboptimalKHR || is_framebuffer_resized)
-    {
-        is_framebuffer_resized = false;
-        application->surface.RecreateSwapChain();
-        return;
-    }
-    
-    if (result != vk::Result::eSuccess)
+    if (result != vk::Result::eSuccess && result != vk::Result::eSuboptimalKHR)
     {
         assert(result == vk::Result::eTimeout || result == vk::Result::eNotReady);
         throw std::runtime_error("Failed to acquire swap chain image!");
@@ -121,6 +185,9 @@ void Drawer::DrawFrame()
     
     // Send the next image of the swap chain to the command buffer
     RecordCommandBuffer(image_index);
+    
+    // Update uniform buffer of the frame
+    UpdateUniformBuffer(frame_index);
     
     // Reminder: `dst` = `destination`
     vk::PipelineStageFlags wait_destination_stage_mask(vk::PipelineStageFlagBits::eColorAttachmentOutput);
@@ -152,8 +219,9 @@ void Drawer::DrawFrame()
     result = application->renderer.GetQueue().presentKHR(present_info);
     
     // Check the result and see if a swap chain needs to be recreated
-    if ((result == vk::Result::eSuboptimalKHR) || (result == vk::Result::eErrorOutOfDateKHR))
+    if ((result == vk::Result::eSuboptimalKHR) || (result == vk::Result::eErrorOutOfDateKHR) || is_framebuffer_resized)
     {
+        is_framebuffer_resized = false;
         application->surface.RecreateSwapChain();
     }
     
@@ -227,13 +295,17 @@ void Drawer::RecordCommandBuffer(uint32_t image_index)
     command_buffer.bindIndexBuffer(*index_buffer, 0, vk::IndexType::eUint16);
     
     // The viewport and scissor is defined as dynamic, so we have to set/update them
-    command_buffer.setViewport(0, vk::Viewport(0.f, 0.f,
-        static_cast<float>(swap_chain_extent.width), static_cast<float>(swap_chain_extent.height),
+    command_buffer.setViewport(0, 
+        vk::Viewport(
+            0.f,  static_cast<float>(swap_chain_extent.height),
+            static_cast<float>(swap_chain_extent.width), -static_cast<float>(swap_chain_extent.height),
         0.f, 1.f));
     command_buffer.setScissor(0, vk::Rect2D(vk::Offset2D(0, 0), swap_chain_extent));
     
+    // Bind the descriptor sets for the uniform buffer
+    command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, application->graphics_pipeline.GetPipelineLayout(), 0, *descriptor_sets[frame_index], nullptr);
+    
     // Readying up the command buffer to draw :)
-    // command_buffer.draw(static_cast<uint32_t>(vertices.size()), 1, 0, 0);
     command_buffer.drawIndexed(static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
     
     // Will end the rendering of the command buffer
@@ -368,4 +440,20 @@ uint32_t Drawer::FindMemoryType(uint32_t type_filter, vk::MemoryPropertyFlags pr
     }
     
     throw std::runtime_error("Failed to find suitable memory type!");
+}
+
+void Drawer::UpdateUniformBuffer(uint32_t current_image)
+{
+    auto& swap_chain_extent = application->surface.GetSwapChainExtent();
+    
+    static auto start_time = std::chrono::high_resolution_clock::now();
+    auto current_time = std::chrono::high_resolution_clock::now();
+    float time = std::chrono::duration<float, std::chrono::seconds::period>(current_time - start_time).count();
+    
+    UniformBufferObject ubo{};
+    ubo.model = glm::rotate(glm::mat4(1.f), time * glm::radians(90.f), glm::vec3(0.f, 0.f, 1.f));
+    ubo.view = glm::lookAt(glm::vec3(2.f, 2.f, 2.f), glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.f, 0.f, 1.f));
+    ubo.proj = glm::perspective(glm::radians(45.f), static_cast<float>(swap_chain_extent.width) / static_cast<float>(swap_chain_extent.height), 0.f, 10.f);
+
+    memcpy(uniform_buffers_mapped[current_image], &ubo, sizeof(ubo));
 }

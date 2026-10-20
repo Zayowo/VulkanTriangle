@@ -54,12 +54,18 @@ void Application::InitVulkan()
     surface.CreateImageViews();
     
     // Graphics pipeline
+    graphics_pipeline.CreateDescriptorSetLayout();
     graphics_pipeline.CreateGraphicsPipeline();
     
     // Drawing
     drawer.CreateCommandPool();
     drawer.CreateVertexBuffer();
     drawer.CreateIndexBuffer();
+    
+    drawer.CreateUniformBuffers();
+    drawer.CreateDescriptorPool();
+    drawer.CreateDescriptorSets();
+    
     drawer.CreateCommandBuffers();
     drawer.CreateSyncObjects();
 }
