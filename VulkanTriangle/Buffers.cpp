@@ -8,6 +8,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <chrono>
 
+#include <stb/stb_image.h>
+
 Buffers::Buffers(Application* application) : application(application)
 {
 }
@@ -82,6 +84,26 @@ void Buffers::CreateUniformBuffers()
         uniform_buffers_memory.emplace_back(std::move(buffer_memory));
         uniform_buffers_mapped.emplace_back(uniform_buffers_memory.back().mapMemory(0, buffer_size));
     }
+}
+
+void Buffers::CreateTextureImage()
+{
+    int tex_width, tex_height, tex_channels;
+    stbi_uc* pixels = stbi_load("textures/texture.jpg", &tex_width, &tex_height, &tex_channels, STBI_rgb_alpha);
+    vk::DeviceSize image_size = tex_width * tex_height * 4;
+    
+    if (!pixels)
+    {
+        throw std::runtime_error("Failed to load texture image!");
+    }
+    
+    auto [staging_buffer, staging_buffer_memory] = CreateBuffer(image_size, vk::BufferUsageFlagBits::eTransferSrc, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
+    
+    void* data = staging_buffer_memory.mapMemory(0, image_size);
+    memcpy(data, pixels, image_size);
+    staging_buffer_memory.unmapMemory();
+    
+    stbi_image_free(pixels);
 }
 
 void Buffers::UpdateUniformBuffer(uint32_t current_image)

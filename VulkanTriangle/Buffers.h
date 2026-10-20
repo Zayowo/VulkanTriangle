@@ -2,6 +2,7 @@
 
 #include "Dependencies.h"
 
+
 class Application;
 
 class Buffers
@@ -14,6 +15,7 @@ public:
     void CreateVertexBuffer();
     void CreateIndexBuffer();
     void CreateUniformBuffers();
+    void CreateTextureImage();
     
     // Uniform Buffers
     void UpdateUniformBuffer(uint32_t);
@@ -36,7 +38,10 @@ private:
     std::vector<vk::raii::DeviceMemory> uniform_buffers_memory;
     std::vector<void*> uniform_buffers_mapped;
     
-    // Vertex Buffers
+    vk::raii::Image texture_image = nullptr;
+    vk::raii::DeviceMemory texture_image_memory = nullptr;
+    
+    
     std::pair<vk::raii::Buffer, vk::raii::DeviceMemory> CreateBuffer(vk::DeviceSize, vk::BufferUsageFlags, vk::MemoryPropertyFlags);
     void CopyBuffer(vk::raii::Buffer&, vk::raii::Buffer&, vk::DeviceSize);
     uint32_t FindMemoryType(uint32_t, vk::MemoryPropertyFlags);
