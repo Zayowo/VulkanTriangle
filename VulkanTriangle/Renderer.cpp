@@ -237,14 +237,14 @@ bool Renderer::IsDeviceSuitable(const vk::raii::PhysicalDevice& phys_device)
     // Check if the physical device supports required features
     auto device_features = phys_device.getFeatures2<
         vk::PhysicalDeviceFeatures2,
-        vk::PhysicalDeviceVulkan11Features,
         vk::PhysicalDeviceVulkan13Features,
         vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT
     >();
 
     bool supports_required_features =
-        device_features.get<vk::PhysicalDeviceVulkan11Features>().shaderDrawParameters &&
+        device_features.get<vk::PhysicalDeviceFeatures2>().features.samplerAnisotropy &&
         device_features.get<vk::PhysicalDeviceVulkan13Features>().dynamicRendering &&
+        device_features.get<vk::PhysicalDeviceVulkan13Features>().synchronization2 &&
         device_features.get<vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT>().extendedDynamicState;
 
     return supports_vulkan_1_4 && supports_graphics_queue && supports_required_extensions && supports_required_features;
@@ -284,14 +284,12 @@ void Renderer::CreateLogicalDevice()
     // Will enable some features in Vulkan
     vk::StructureChain<
         vk::PhysicalDeviceFeatures2,
-        vk::PhysicalDeviceVulkan11Features,
         vk::PhysicalDeviceVulkan13Features,
         vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT
     > feature_chain =
     {
-        {},
-        {.shaderDrawParameters = true},
-        {.dynamicRendering = true},
+        {.features = {.samplerAnisotropy = true} },
+        {.synchronization2 = true, .dynamicRendering = true},
         {.extendedDynamicState = true}
     };
 

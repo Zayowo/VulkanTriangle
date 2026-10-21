@@ -26,13 +26,14 @@ private:
     
     void RecordCommandBuffer(uint32_t);
     void TransitionImageLayout(
-        uint32_t,
+        vk::Image,
         vk::ImageLayout,
         vk::ImageLayout,
         vk::AccessFlags2,
         vk::AccessFlags2,
         vk::PipelineStageFlags2,
-        vk::PipelineStageFlags2
+        vk::PipelineStageFlags2,
+        vk::ImageAspectFlags
     );
     
     // Refs

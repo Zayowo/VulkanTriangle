@@ -11,21 +11,31 @@ GraphicsPipeline::GraphicsPipeline(Application* application) : application(appli
 
 void GraphicsPipeline::CreateDescriptorSetLayout()
 {
-    vk::DescriptorSetLayoutBinding ubo_layout_binding
+    std::array<vk::DescriptorSetLayoutBinding, 2> layout_bindings
     {
-        .binding = 0,
-        .descriptorType = vk::DescriptorType::eUniformBuffer,
-        .descriptorCount = 1,
-        .stageFlags = vk::ShaderStageFlagBits::eVertex
+        {
+            {
+                .binding = 0,
+                .descriptorType = vk::DescriptorType::eUniformBuffer,
+                .descriptorCount = 1,
+                .stageFlags = vk::ShaderStageFlagBits::eVertex
+            },
+            {
+                .binding = 1,
+                .descriptorType = vk::DescriptorType::eCombinedImageSampler,
+                .descriptorCount = 1,
+                .stageFlags = vk::ShaderStageFlagBits::eFragment
+            }
+        }
     };
     
-    vk::DescriptorSetLayoutCreateInfo ubo_layout_create_info
+    vk::DescriptorSetLayoutCreateInfo layout_create_info
     {
-        .bindingCount = 1,
-        .pBindings = &ubo_layout_binding
+        .bindingCount = static_cast<uint32_t>(layout_bindings.size()),
+        .pBindings = layout_bindings.data()
     };
     
-    descriptor_set_layout = vk::raii::DescriptorSetLayout(application->renderer.GetDevice(), ubo_layout_create_info);
+    descriptor_set_layout = vk::raii::DescriptorSetLayout(application->renderer.GetDevice(), layout_create_info);
 }
 
 void GraphicsPipeline::CreateGraphicsPipeline()
@@ -175,18 +185,26 @@ void GraphicsPipeline::CreateGraphicsPipeline()
 
 void GraphicsPipeline::CreateDescriptorPool()
 {
-    vk::DescriptorPoolSize descriptor_pool_size
+    std::array<vk::DescriptorPoolSize, 2> descriptor_pool_size
     {
-        .type = vk::DescriptorType::eUniformBuffer,
-        .descriptorCount = MAX_FRAMES_IN_FLIGHT
+        {
+            {
+                .type = vk::DescriptorType::eUniformBuffer,
+                .descriptorCount = MAX_FRAMES_IN_FLIGHT
+            },
+            {
+                .type = vk::DescriptorType::eCombinedImageSampler,
+                .descriptorCount = MAX_FRAMES_IN_FLIGHT
+            }
+        }
     };
     
     vk::DescriptorPoolCreateInfo descriptor_pool_create_info
     {
         .flags = vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet,
         .maxSets = MAX_FRAMES_IN_FLIGHT,
-        .poolSizeCount = 1,
-        .pPoolSizes = &descriptor_pool_size
+        .poolSizeCount = static_cast<uint32_t>(descriptor_pool_size.size()),
+        .pPoolSizes = descriptor_pool_size.data()
     };
     
     descriptor_pool = vk::raii::DescriptorPool(application->renderer.GetDevice(), descriptor_pool_create_info);
@@ -214,17 +232,36 @@ void GraphicsPipeline::CreateDescriptorSets()
             .range = sizeof(UniformBufferObject)
         };
         
-        vk::WriteDescriptorSet descriptor_write
+        vk::DescriptorImageInfo descriptor_image_info
         {
-            .dstSet = descriptor_sets[i],
-            .dstBinding = 0,
-            .dstArrayElement = 0,
-            .descriptorCount = 1,
-            .descriptorType = vk::DescriptorType::eUniformBuffer,
-            .pBufferInfo = &descriptor_buffer_info
+            .sampler = application->buffers.GetTextureSampler(),
+            .imageView = application->buffers.GetTextureImageView(),
+            .imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal
         };
         
-        application->renderer.GetDevice().updateDescriptorSets(descriptor_write, {});
+        std::array<vk::WriteDescriptorSet, 2> descriptor_writes
+        {
+            {
+                {
+                    .dstSet = descriptor_sets[i],
+                   .dstBinding = 0,
+                   .dstArrayElement = 0,
+                   .descriptorCount = 1,
+                   .descriptorType = vk::DescriptorType::eUniformBuffer,
+                   .pBufferInfo = &descriptor_buffer_info
+                },
+                {
+                    .dstSet = descriptor_sets[i],
+                    .dstBinding = 1,
+                    .dstArrayElement = 0,
+                    .descriptorCount = 1,
+                    .descriptorType = vk::DescriptorType::eCombinedImageSampler,
+                    .pImageInfo = &descriptor_image_info
+                }
+            }
+        };
+        
+        application->renderer.GetDevice().updateDescriptorSets(descriptor_writes, {});
     }
 }
 

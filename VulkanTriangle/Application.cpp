@@ -59,6 +59,13 @@ void Application::InitVulkan()
     
     // Buffers
     buffers.CreateCommandPool();
+    
+    buffers.CreateDepthResources();
+    
+    buffers.CreateTextureImage();
+    buffers.CreateTextureImageView();
+    buffers.CreateTextureSampler();
+    
     buffers.CreateVertexBuffer();
     buffers.CreateIndexBuffer();
     buffers.CreateUniformBuffers();

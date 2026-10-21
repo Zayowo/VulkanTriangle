@@ -70,7 +70,7 @@ void Drawer::DrawFrame()
         .commandBufferCount = 1,
         .pCommandBuffers = &*application->buffers.GetCommandBuffers()[frame_index],
         .signalSemaphoreCount = 1,
-        .pSignalSemaphores = &*render_finished_semaphores[frame_index]
+        .pSignalSemaphores = &*render_finished_semaphores[image_index]
     };
     
     application->renderer.GetQueue().submit(submit_info, *in_flight_fences[frame_index]);
@@ -79,7 +79,7 @@ void Drawer::DrawFrame()
     const vk::PresentInfoKHR present_info =
     {
         .waitSemaphoreCount = 1,
-        .pWaitSemaphores = &*render_finished_semaphores[frame_index],
+        .pWaitSemaphores = &*render_finished_semaphores[image_index],
         .swapchainCount = 1,
         .pSwapchains = &*swap_chain,
         .pImageIndices = &image_index
@@ -113,33 +113,59 @@ void Drawer::FramebufferResizeCallback(GLFWwindow* window, int height, int width
 void Drawer::RecordCommandBuffer(uint32_t image_index)
 {
     auto& command_buffer = application->buffers.GetCommandBuffers()[frame_index];
+    auto& color_image = application->surface.GetSwapChainImages()[image_index];
+    auto& depth_image = application->buffers.GetDepthImage();
     
     // Will begin the command buffer
     command_buffer.begin({});
     
     TransitionImageLayout(
-        image_index,
+        color_image,
         vk::ImageLayout::eUndefined,
         vk::ImageLayout::eColorAttachmentOptimal,
         {},
         vk::AccessFlagBits2::eColorAttachmentWrite,
         vk::PipelineStageFlagBits2::eColorAttachmentOutput,
-        vk::PipelineStageFlagBits2::eColorAttachmentOutput
+        vk::PipelineStageFlagBits2::eColorAttachmentOutput,
+        vk::ImageAspectFlagBits::eColor
     );
     
+    TransitionImageLayout(
+        depth_image,
+        vk::ImageLayout::eUndefined,
+        vk::ImageLayout::eColorAttachmentOptimal,
+        vk::AccessFlagBits2::eDepthStencilAttachmentWrite,
+        vk::AccessFlagBits2::eDepthStencilAttachmentWrite,
+        vk::PipelineStageFlagBits2::eEarlyFragmentTests | vk::PipelineStageFlagBits2::eLateFragmentTests,
+        vk::PipelineStageFlagBits2::eEarlyFragmentTests | vk::PipelineStageFlagBits2::eLateFragmentTests,
+        vk::ImageAspectFlagBits::eDepth
+    );
+    
+    // Clear values
     vk::ClearValue clear_color = vk::ClearColorValue(0.f, 0.f, 0.f, 1.f);
+    vk::ClearValue clear_depth = vk::ClearDepthStencilValue(1.f, 0);
 
     const auto& swap_chain_image_views = application->surface.GetSwapChainImageViews();
     const auto& swap_chain_extent = application->surface.GetSwapChainExtent();
     
-    // Define the attachment info of the rendering
-    vk::RenderingAttachmentInfo attachment_info =
+    // Define the attachment info for the color
+    vk::RenderingAttachmentInfo color_attachment_info =
     {
         .imageView = swap_chain_image_views[image_index],
         .imageLayout = vk::ImageLayout::eColorAttachmentOptimal,
         .loadOp = vk::AttachmentLoadOp::eClear,
         .storeOp = vk::AttachmentStoreOp::eStore,
         .clearValue = clear_color
+    };
+    
+    // Define the attachment info for the depth
+    vk::RenderingAttachmentInfo depth_attachment_info =
+    {
+        .imageView = application->buffers.GetDepthImageView(),
+        .imageLayout = vk::ImageLayout::eDepthAttachmentOptimal,
+        .loadOp = vk::AttachmentLoadOp::eClear,
+        .storeOp = vk::AttachmentStoreOp::eDontCare,
+        .clearValue = clear_depth
     };
     
     // Define the rendering info
@@ -152,7 +178,8 @@ void Drawer::RecordCommandBuffer(uint32_t image_index)
         },
         .layerCount = 1,
         .colorAttachmentCount = 1,
-        .pColorAttachments = &attachment_info
+        .pColorAttachments = &color_attachment_info,
+        .pDepthAttachment = &depth_attachment_info
     };
     
     // Will begin the rendering of the command buffer
@@ -164,12 +191,21 @@ void Drawer::RecordCommandBuffer(uint32_t image_index)
     command_buffer.bindIndexBuffer(*application->buffers.GetIndexBuffer(), 0, vk::IndexType::eUint16);
     
     // The viewport and scissor is defined as dynamic, so we have to set/update them
-    command_buffer.setViewport(0, 
-        vk::Viewport(
-            0.f,  static_cast<float>(swap_chain_extent.height),
-            static_cast<float>(swap_chain_extent.width), -static_cast<float>(swap_chain_extent.height),
-        0.f, 1.f));
-    command_buffer.setScissor(0, vk::Rect2D(vk::Offset2D(0, 0), swap_chain_extent));
+    command_buffer.setViewport(0, vk::Viewport
+    {
+        .x = 0.f,
+        .y = static_cast<float>(swap_chain_extent.height),
+        .width = static_cast<float>(swap_chain_extent.width),
+        .height = -static_cast<float>(swap_chain_extent.height),
+        .minDepth = 0.f,
+        .maxDepth = 1.f
+    });
+    
+    command_buffer.setScissor(0, vk::Rect2D
+    {
+        .offset = vk::Offset2D(0, 0),
+        .extent = swap_chain_extent
+    });
     
     // Bind the descriptor sets for the uniform buffer
     command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, application->graphics_pipeline.GetPipelineLayout(), 0, *application->graphics_pipeline.GetDescriptorSets()[frame_index], nullptr);
@@ -181,30 +217,30 @@ void Drawer::RecordCommandBuffer(uint32_t image_index)
     command_buffer.endRendering();
     
     TransitionImageLayout(
-        image_index,
+        color_image,
         vk::ImageLayout::eColorAttachmentOptimal,
         vk::ImageLayout::ePresentSrcKHR,
         vk::AccessFlagBits2::eColorAttachmentWrite,
         {},
         vk::PipelineStageFlagBits2::eColorAttachmentOutput,
-        vk::PipelineStageFlagBits2::eBottomOfPipe
+        vk::PipelineStageFlagBits2::eBottomOfPipe,
+        vk::ImageAspectFlagBits::eColor
     );
     
     command_buffer.end();
 }
 
 void Drawer::TransitionImageLayout(
-    uint32_t image_index,
+    vk::Image image,
     vk::ImageLayout old_layout,
     vk::ImageLayout new_layout,
     vk::AccessFlags2 src_access_mask,
     vk::AccessFlags2 dst_access_mask,
     vk::PipelineStageFlags2 src_stage_mask,
-    vk::PipelineStageFlags2 dst_stage_mask
+    vk::PipelineStageFlags2 dst_stage_mask,
+    vk::ImageAspectFlags image_aspect_flags
 )
 {
-    auto& swap_chain_images = application->surface.GetSwapChainImages();
-    
     vk::ImageMemoryBarrier2 barrier =
     {
         .srcStageMask = src_stage_mask,
@@ -215,10 +251,10 @@ void Drawer::TransitionImageLayout(
         .newLayout = new_layout,
         .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
         .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-        .image = swap_chain_images[image_index],
+        .image = image, // swap_chain_images[image_index],
         .subresourceRange = 
         {
-            .aspectMask = vk::ImageAspectFlagBits::eColor,
+            .aspectMask = image_aspect_flags,
             .baseMipLevel = 0,
             .levelCount = 1,
             .baseArrayLayer = 0,
