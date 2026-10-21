@@ -122,7 +122,14 @@ void GraphicsPipeline::CreateGraphicsPipeline()
         .sampleShadingEnable = vk::False
     };
     
-    // vk::PipelineDepthStencilStateCreateInfo depth_stencil_create_info;
+    vk::PipelineDepthStencilStateCreateInfo depth_stencil_create_info
+    {
+        .depthTestEnable = vk::True,
+        .depthWriteEnable = vk::True,
+        .depthCompareOp = vk::CompareOp::eLess,
+        .depthBoundsTestEnable = vk::False,
+        .stencilTestEnable = vk::False
+    };
     
     vk::PipelineColorBlendAttachmentState color_blend_attachment
     {
@@ -168,6 +175,7 @@ void GraphicsPipeline::CreateGraphicsPipeline()
             .pViewportState = &viewport_state_create_info,
             .pRasterizationState = &rasterizer_create_info,
             .pMultisampleState = &multisample_create_info,
+            .pDepthStencilState = &depth_stencil_create_info,
             .pColorBlendState = &color_blend_state_create_info,
             .pDynamicState = &dynamic_state_create_info,
             .layout = pipeline_layout,
@@ -175,7 +183,8 @@ void GraphicsPipeline::CreateGraphicsPipeline()
         },
         {
             .colorAttachmentCount = 1,
-            .pColorAttachmentFormats = &swap_chain_surface_format.format
+            .pColorAttachmentFormats = &swap_chain_surface_format.format,
+            .depthAttachmentFormat = application->buffers.GetDepthFormat();
         }
     };
     
