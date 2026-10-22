@@ -22,7 +22,7 @@ public:
     GraphicsPipeline graphics_pipeline;
     Buffers buffers;
     Drawer drawer;
-
+    
     void Init();
     void Run();
     void Destroy();

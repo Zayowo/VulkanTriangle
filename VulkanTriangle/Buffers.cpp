@@ -4,7 +4,6 @@
 #include "Geometry.h"
 #include "Utils.h"
 
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -165,11 +164,12 @@ void Buffers::UpdateUniformBuffer(uint32_t current_image)
 {
     auto& swap_chain_extent = application->surface.GetSwapChainExtent();
     
-    static auto start_time = std::chrono::high_resolution_clock::now();
+    static auto last_time = std::chrono::high_resolution_clock::now();
     auto current_time = std::chrono::high_resolution_clock::now();
-    float time = std::chrono::duration<float, std::chrono::seconds::period>(current_time - start_time).count();
+    auto time = std::chrono::duration<float, std::chrono::seconds::period>(current_time - last_time).count();
     
     UniformBufferObject ubo{};
+    
     ubo.model = glm::rotate(glm::mat4(1.f), time * glm::radians(90.f), glm::vec3(0.f, 0.f, 1.f));
     ubo.view = glm::lookAt(glm::vec3(2.f, 2.f, 2.f), glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.f, 0.f, 1.f));
     ubo.proj = glm::perspective(glm::radians(45.f), static_cast<float>(swap_chain_extent.width) / static_cast<float>(swap_chain_extent.height), 0.1f, 10.f);

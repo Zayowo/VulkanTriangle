@@ -131,7 +131,7 @@ void Drawer::RecordCommandBuffer(uint32_t image_index)
     );
     
     TransitionImageLayout(
-        depth_image,
+        *depth_image,
         vk::ImageLayout::eUndefined,
         vk::ImageLayout::eDepthAttachmentOptimal,
         vk::AccessFlagBits2::eDepthStencilAttachmentWrite,

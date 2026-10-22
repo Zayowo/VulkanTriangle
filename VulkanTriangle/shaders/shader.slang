@@ -37,5 +37,8 @@ Sampler2D texture;
 [shader("fragment")]
 float4 fragMain(VSOutput output) : SV_Target
 {
+    // return float4(output.fragColor, 1.0);
     return texture.Sample(output.fragTexCoord);
+    // clip(texel.a - 0.5);
+    // return texel;
 }
