@@ -102,7 +102,7 @@ void Buffers::CreateUniformBuffers()
 void Buffers::CreateTextureImage()
 {
     int tex_width, tex_height, tex_channels;
-    stbi_uc* pixels = stbi_load("textures/texture.png", &tex_width, &tex_height, &tex_channels, STBI_rgb_alpha);
+    stbi_uc* pixels = stbi_load("textures/texture_a.jpg", &tex_width, &tex_height, &tex_channels, STBI_rgb_alpha);
     vk::DeviceSize image_size = tex_width * tex_height * 4;
     
     if (!pixels)
@@ -172,7 +172,7 @@ void Buffers::UpdateUniformBuffer(uint32_t current_image)
     UniformBufferObject ubo{};
     ubo.model = glm::rotate(glm::mat4(1.f), time * glm::radians(90.f), glm::vec3(0.f, 0.f, 1.f));
     ubo.view = glm::lookAt(glm::vec3(2.f, 2.f, 2.f), glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.f, 0.f, 1.f));
-    ubo.proj = glm::perspective(glm::radians(45.f), static_cast<float>(swap_chain_extent.width) / static_cast<float>(swap_chain_extent.height), 0.f, 10.f);
+    ubo.proj = glm::perspective(glm::radians(45.f), static_cast<float>(swap_chain_extent.width) / static_cast<float>(swap_chain_extent.height), 0.1f, 10.f);
 
     memcpy(uniform_buffers_mapped[current_image], &ubo, sizeof(ubo));
 }

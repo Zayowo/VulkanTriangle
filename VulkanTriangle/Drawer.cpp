@@ -142,7 +142,7 @@ void Drawer::RecordCommandBuffer(uint32_t image_index)
     );
     
     // Clear values
-    vk::ClearValue clear_color = vk::ClearColorValue(0.f, 0.f, 0.f, 1.f);
+    vk::ClearValue clear_color = vk::ClearColorValue(1.f, 1.f, 1.f, 1.f);
     vk::ClearValue clear_depth = vk::ClearDepthStencilValue(1.f, 0);
 
     const auto& swap_chain_image_views = application->surface.GetSwapChainImageViews();
