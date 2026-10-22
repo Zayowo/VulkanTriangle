@@ -133,7 +133,7 @@ void Drawer::RecordCommandBuffer(uint32_t image_index)
     TransitionImageLayout(
         depth_image,
         vk::ImageLayout::eUndefined,
-        vk::ImageLayout::eColorAttachmentOptimal,
+        vk::ImageLayout::eDepthAttachmentOptimal,
         vk::AccessFlagBits2::eDepthStencilAttachmentWrite,
         vk::AccessFlagBits2::eDepthStencilAttachmentWrite,
         vk::PipelineStageFlagBits2::eEarlyFragmentTests | vk::PipelineStageFlagBits2::eLateFragmentTests,
@@ -187,8 +187,6 @@ void Drawer::RecordCommandBuffer(uint32_t image_index)
     
     // Bind a lot of stuff to the command buffer so it works properly
     command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *application->graphics_pipeline.GetPipeline());
-    command_buffer.bindVertexBuffers(0, *application->buffers.GetVertexBuffer(), {0});
-    command_buffer.bindIndexBuffer(*application->buffers.GetIndexBuffer(), 0, vk::IndexType::eUint16);
     
     // The viewport and scissor is defined as dynamic, so we have to set/update them
     command_buffer.setViewport(0, vk::Viewport
@@ -206,6 +204,10 @@ void Drawer::RecordCommandBuffer(uint32_t image_index)
         .offset = vk::Offset2D(0, 0),
         .extent = swap_chain_extent
     });
+    
+    // Bind buffers
+    command_buffer.bindVertexBuffers(0, *application->buffers.GetVertexBuffer(), {0});
+    command_buffer.bindIndexBuffer(*application->buffers.GetIndexBuffer(), 0, vk::IndexType::eUint16);
     
     // Bind the descriptor sets for the uniform buffer
     command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, application->graphics_pipeline.GetPipelineLayout(), 0, *application->graphics_pipeline.GetDescriptorSets()[frame_index], nullptr);

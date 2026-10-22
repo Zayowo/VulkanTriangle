@@ -177,6 +177,9 @@ void Surface::RecreateSwapChain()
     // Make a new swap chain
     CreateSwapChain();
     CreateImageViews();
+    
+    // Create depth resources again!
+    application->buffers.CreateDepthResources();
 }
 
 vk::raii::SurfaceKHR& Surface::GetSurface()

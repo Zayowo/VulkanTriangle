@@ -161,6 +161,7 @@ void GraphicsPipeline::CreateGraphicsPipeline()
     };
     
     pipeline_layout = vk::raii::PipelineLayout(device, pipeline_layout_create_info);
+    pipeline_layout = vk::raii::PipelineLayout(device, pipeline_layout_create_info);
     
     vk::StructureChain<
         vk::GraphicsPipelineCreateInfo,
@@ -184,7 +185,7 @@ void GraphicsPipeline::CreateGraphicsPipeline()
         {
             .colorAttachmentCount = 1,
             .pColorAttachmentFormats = &swap_chain_surface_format.format,
-            .depthAttachmentFormat = application->buffers.GetDepthFormat();
+            .depthAttachmentFormat = application->buffers.FindDepthFormat()
         }
     };
     

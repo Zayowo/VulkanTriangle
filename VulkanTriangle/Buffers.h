@@ -36,6 +36,7 @@ public:
     vk::raii::Sampler& GetTextureSampler();
     
     // Depth
+    vk::Format FindDepthFormat();
     vk::raii::Image& GetDepthImage();
     vk::raii::ImageView& GetDepthImageView();
 
@@ -79,8 +80,7 @@ private:
     vk::raii::ImageView depth_image_view = nullptr;
     
     vk::Format FindSupportedFormat(const std::vector<vk::Format>&, vk::ImageTiling, vk::FormatFeatureFlags);
-    vk::Format FindDepthFormat();
-    
+
     // Refs
     Application* application;
 };
