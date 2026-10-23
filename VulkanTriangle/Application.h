@@ -6,6 +6,7 @@
 #include "GraphicsPipeline.h"
 #include "Renderer.h"
 #include "Surface.h"
+#include "TextureManager.h"
 
 class Application
 {
@@ -21,6 +22,7 @@ public:
     Surface surface;
     GraphicsPipeline graphics_pipeline;
     Buffers buffers;
+    TextureManager texture_manager;
     Drawer drawer;
     
     void Init();

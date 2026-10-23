@@ -2,7 +2,7 @@
 
 #include "Renderer.h"
 
-Application::Application() : renderer(this), surface(this), graphics_pipeline(this), buffers(this), drawer(this)
+Application::Application() : renderer(this), surface(this), graphics_pipeline(this), buffers(this), texture_manager(this), drawer(this)
 {
 }
 
@@ -65,9 +65,9 @@ void Application::InitVulkan()
     buffers.CreateDepthResources();
     
     // Handle texture(s) stuff 
-    buffers.CreateTextureImage();
-    buffers.CreateTextureImageView();
-    buffers.CreateTextureSampler();
+    texture_manager.CreateTextureImage();
+    texture_manager.CreateTextureImageView();
+    texture_manager.CreateTextureSampler();
     
     // Create buffers we need, vertices, indices, and uniform objects
     buffers.CreateVertexBuffer();

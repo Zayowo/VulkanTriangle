@@ -244,8 +244,8 @@ void GraphicsPipeline::CreateDescriptorSets()
         
         vk::DescriptorImageInfo descriptor_image_info
         {
-            .sampler = application->buffers.GetTextureSampler(),
-            .imageView = application->buffers.GetTextureImageView(),
+            .sampler = application->texture_manager.GetTextureSampler(),
+            .imageView = application->texture_manager.GetTextureImageView(),
             .imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal
         };
         
