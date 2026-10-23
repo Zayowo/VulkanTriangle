@@ -39,16 +39,6 @@ void Buffers::CreateCommandBuffers()
     command_buffers = vk::raii::CommandBuffers(application->renderer.GetDevice(), command_buffer_allocate_info);
 }
 
-void Buffers::CreateDepthResources()
-{
-    vk::Format depth_format = FindDepthFormat();
-    
-    auto& swap_chain_extent = application->surface.GetSwapChainExtent();
-    
-    std::tie(depth_image, depth_image_memory) = CreateImage(swap_chain_extent.width, swap_chain_extent.height, depth_format, vk::ImageTiling::eOptimal, vk::ImageUsageFlagBits::eDepthStencilAttachment, vk::MemoryPropertyFlagBits::eDeviceLocal);
-    depth_image_view = CreateImageView(depth_image, depth_format, vk::ImageAspectFlagBits::eDepth);
-}
-
 void Buffers::CreateVertexBuffer()
 {
     // Get the size necessary for the vertex buffer
@@ -272,35 +262,6 @@ vk::raii::ImageView Buffers::CreateImageView(vk::Image const& image, vk::Format 
     return vk::raii::ImageView(application->renderer.GetDevice(), image_view_create_info);
 }
 
-vk::Format Buffers::FindSupportedFormat(const std::vector<vk::Format>& candidates, vk::ImageTiling tiling, vk::FormatFeatureFlags features)
-{
-    auto& physical_device = application->renderer.GetPhysicalDevice();
-    
-    for (const auto format : candidates)
-    {
-        vk::FormatProperties properties = physical_device.getFormatProperties(format);
-        
-        if (
-            (tiling == vk::ImageTiling::eLinear) && ((properties.linearTilingFeatures & features) == features) ||
-            (tiling == vk::ImageTiling::eOptimal) && ((properties.optimalTilingFeatures & features) == features)
-        )
-        {
-            return format;
-        }
-    }
-    
-    throw std::runtime_error("Failed to find supported format!");
-}
-
-vk::Format Buffers::FindDepthFormat()
-{
-    return FindSupportedFormat(
-        { vk::Format::eD32Sfloat, vk::Format::eD32SfloatS8Uint, vk::Format::eD24UnormS8Uint },
-        vk::ImageTiling::eOptimal,
-        vk::FormatFeatureFlagBits::eDepthStencilAttachment
-    );
-}
-
 std::vector<vk::raii::CommandBuffer>& Buffers::GetCommandBuffers()
 {
     return command_buffers;
@@ -319,14 +280,4 @@ vk::raii::Buffer& Buffers::GetIndexBuffer()
 std::vector<vk::raii::Buffer>& Buffers::GetUniformBuffers()
 {
     return uniform_buffers;
-}
-
-vk::raii::Image& Buffers::GetDepthImage()
-{
-    return depth_image;
-}
-
-vk::raii::ImageView& Buffers::GetDepthImageView()
-{
-    return depth_image_view;
 }

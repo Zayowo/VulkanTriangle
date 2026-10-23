@@ -185,7 +185,7 @@ void GraphicsPipeline::CreateGraphicsPipeline()
         {
             .colorAttachmentCount = 1,
             .pColorAttachmentFormats = &swap_chain_surface_format.format,
-            .depthAttachmentFormat = application->buffers.FindDepthFormat()
+            .depthAttachmentFormat = application->depth_resources.FindDepthFormat()
         }
     };
     

@@ -2,7 +2,7 @@
 
 #include "Renderer.h"
 
-Application::Application() : renderer(this), surface(this), graphics_pipeline(this), buffers(this), texture_manager(this), drawer(this)
+Application::Application() : renderer(this), surface(this), graphics_pipeline(this), buffers(this), depth_resources(this), texture_manager(this), drawer(this)
 {
 }
 
@@ -62,7 +62,7 @@ void Application::InitVulkan()
     buffers.CreateCommandPool();
     
     // Create resources for the depth of objects
-    buffers.CreateDepthResources();
+    depth_resources.CreateDepthResources();
     
     // Handle texture(s) stuff 
     texture_manager.CreateTextureImage();

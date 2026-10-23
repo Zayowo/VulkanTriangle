@@ -12,7 +12,6 @@ public:
     
     void CreateCommandPool();
     void CreateCommandBuffers();
-    void CreateDepthResources();
     void CreateVertexBuffer();
     void CreateIndexBuffer();
     void CreateUniformBuffers();
@@ -31,11 +30,6 @@ public:
     vk::raii::Buffer& GetVertexBuffer();
     vk::raii::Buffer& GetIndexBuffer();
     std::vector<vk::raii::Buffer>& GetUniformBuffers();
-    
-    // Depth
-    vk::Format FindDepthFormat();
-    vk::raii::Image& GetDepthImage();
-    vk::raii::ImageView& GetDepthImageView();
     
     // Helpers for command buffers
     vk::raii::CommandBuffer BeginSimpleTimeCommands();
@@ -57,12 +51,6 @@ private:
     uint32_t FindMemoryType(uint32_t, vk::MemoryPropertyFlags);
     
     void CopyBuffer(vk::raii::Buffer&, vk::raii::Buffer&, vk::DeviceSize);
-    
-    vk::raii::Image depth_image = nullptr;
-    vk::raii::DeviceMemory depth_image_memory = nullptr;
-    vk::raii::ImageView depth_image_view = nullptr;
-    
-    vk::Format FindSupportedFormat(const std::vector<vk::Format>&, vk::ImageTiling, vk::FormatFeatureFlags);
 
     // Refs
     Application* application;

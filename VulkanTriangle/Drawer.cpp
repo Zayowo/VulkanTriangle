@@ -114,7 +114,7 @@ void Drawer::RecordCommandBuffer(uint32_t image_index)
 {
     auto& command_buffer = application->buffers.GetCommandBuffers()[frame_index];
     auto& color_image = application->surface.GetSwapChainImages()[image_index];
-    auto& depth_image = application->buffers.GetDepthImage();
+    auto& depth_image = application->depth_resources.GetDepthImage();
     
     // Will begin the command buffer
     command_buffer.begin({});
@@ -161,7 +161,7 @@ void Drawer::RecordCommandBuffer(uint32_t image_index)
     // Define the attachment info for the depth
     vk::RenderingAttachmentInfo depth_attachment_info =
     {
-        .imageView = application->buffers.GetDepthImageView(),
+        .imageView = application->depth_resources.GetDepthImageView(),
         .imageLayout = vk::ImageLayout::eDepthAttachmentOptimal,
         .loadOp = vk::AttachmentLoadOp::eClear,
         .storeOp = vk::AttachmentStoreOp::eDontCare,

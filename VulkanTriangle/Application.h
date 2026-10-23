@@ -2,6 +2,7 @@
 
 #include "Dependencies.h"
 #include "Buffers.h"
+#include "DepthResources.h"
 #include "Drawer.h"
 #include "GraphicsPipeline.h"
 #include "Renderer.h"
@@ -22,6 +23,7 @@ public:
     Surface surface;
     GraphicsPipeline graphics_pipeline;
     Buffers buffers;
+    DepthResources depth_resources;
     TextureManager texture_manager;
     Drawer drawer;
     
