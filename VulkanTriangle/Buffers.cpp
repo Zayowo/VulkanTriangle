@@ -92,9 +92,9 @@ void Buffers::UpdateUniformBuffer(uint32_t current_image)
 {
     auto& swap_chain_extent = application->surface.GetSwapChainExtent();
     
-    static auto last_time = std::chrono::high_resolution_clock::now();
+    static auto start_time = std::chrono::high_resolution_clock::now();
     auto current_time = std::chrono::high_resolution_clock::now();
-    auto time = std::chrono::duration<float, std::chrono::seconds::period>(current_time - last_time).count();
+    auto time = std::chrono::duration<float, std::chrono::seconds::period>(current_time - start_time).count();
     
     UniformBufferObject ubo{};
     
@@ -125,7 +125,7 @@ std::pair<vk::raii::Buffer, vk::raii::DeviceMemory> Buffers::CreateBuffer(vk::De
     vk::MemoryAllocateInfo memory_allocate_info =
     {
         .allocationSize = memory_requirements.size,
-        .memoryTypeIndex = FindMemoryType(memory_requirements.memoryTypeBits, properties)
+        .memoryTypeIndex = application->renderer.FindMemoryType(memory_requirements.memoryTypeBits, properties)
     };
     
     vk::raii::DeviceMemory buffer_memory = vk::raii::DeviceMemory(device, memory_allocate_info);
@@ -180,86 +180,6 @@ void Buffers::CopyBuffer(vk::raii::Buffer& src_buffer, vk::raii::Buffer& dst_buf
     vk::raii::CommandBuffer command_copy_buffer = BeginSimpleTimeCommands();
     command_copy_buffer.copyBuffer(*src_buffer, *dst_buffer, vk::BufferCopy(0, 0, size));
     EndSingleTimeCommands(std::move(command_copy_buffer));
-}
-
-uint32_t Buffers::FindMemoryType(uint32_t type_filter, vk::MemoryPropertyFlags properties)
-{
-    auto& physical_device = application->renderer.GetPhysicalDevice();
-    vk::PhysicalDeviceMemoryProperties memory_properties = physical_device.getMemoryProperties();
-    
-    for (uint32_t i = 0; i < memory_properties.memoryTypeCount; i++)
-    {
-        if (
-            (type_filter & (1 << i)) &&
-            (memory_properties.memoryTypes[i].propertyFlags & properties) == properties
-        )
-        {
-            return i;
-        }
-    }
-    
-    throw std::runtime_error("Failed to find suitable memory type!");
-}
-
-std::pair<vk::raii::Image, vk::raii::DeviceMemory> Buffers::CreateImage(
-    uint32_t width,
-    uint32_t height,
-    vk::Format format,
-    vk::ImageTiling tiling,
-    vk::ImageUsageFlags usage,
-    vk::MemoryPropertyFlags properties
-)
-{
-    auto& device = application->renderer.GetDevice();
-    
-    vk::ImageCreateInfo image_create_info
-    {
-        .imageType = vk::ImageType::e2D,
-        .format = format,
-        .extent = {width, height, 1},
-        .mipLevels = 1,
-        .arrayLayers = 1,
-        .samples = vk::SampleCountFlagBits::e1,
-        .tiling = tiling,
-        .usage = usage,
-        .sharingMode = vk::SharingMode::eExclusive
-    };
-    
-    vk::raii::Image image(device, image_create_info);
-    
-    vk::MemoryRequirements memory_requirements = image.getMemoryRequirements();
-    
-    vk::MemoryAllocateInfo allocate_info =
-    {
-        .allocationSize = memory_requirements.size,
-        .memoryTypeIndex = FindMemoryType(memory_requirements.memoryTypeBits, properties)
-    };
-    
-    vk::raii::DeviceMemory image_memory(device, allocate_info);
-    
-    image.bindMemory(image_memory, 0);
-    
-    return { std::move(image), std::move(image_memory) };
-}
-
-vk::raii::ImageView Buffers::CreateImageView(vk::Image const& image, vk::Format format, vk::ImageAspectFlags aspect_flags)
-{
-    vk::ImageViewCreateInfo image_view_create_info
-    {
-        .image = image,
-        .viewType = vk::ImageViewType::e2D,
-        .format = format,
-        .subresourceRange =
-        {
-            .aspectMask = aspect_flags,
-            .baseMipLevel = 0,
-            .levelCount = 1,
-            .baseArrayLayer = 0,
-            .layerCount = 1
-        }
-    };
-    
-    return vk::raii::ImageView(application->renderer.GetDevice(), image_view_create_info);
 }
 
 std::vector<vk::raii::CommandBuffer>& Buffers::GetCommandBuffers()

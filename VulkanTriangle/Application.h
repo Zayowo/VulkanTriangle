@@ -5,6 +5,7 @@
 #include "DepthResources.h"
 #include "Drawer.h"
 #include "GraphicsPipeline.h"
+#include "ImageManager.h"
 #include "Renderer.h"
 #include "Surface.h"
 #include "TextureManager.h"
@@ -26,6 +27,7 @@ public:
     DepthResources depth_resources;
     TextureManager texture_manager;
     Drawer drawer;
+    ImageManager image_manager;
     
     void Init();
     void Run();

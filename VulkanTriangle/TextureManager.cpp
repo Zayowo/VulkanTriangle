@@ -28,7 +28,7 @@ void TextureManager::CreateTextureImage()
     stbi_image_free(pixels);
     
     // Tie the `texture_image` and `texture_image_memory` with what CreateImage is returning
-    std::tie(texture_image, texture_image_memory) = application->buffers.CreateImage(
+    std::tie(texture_image, texture_image_memory) = application->image_manager.CreateImage(
         tex_width,
         tex_height,
         vk::Format::eR8G8B8A8Srgb,
@@ -46,7 +46,7 @@ void TextureManager::CreateTextureImage()
 
 void TextureManager::CreateTextureImageView()
 {
-    texture_image_view = application->buffers.CreateImageView(*texture_image, vk::Format::eR8G8B8A8Srgb, vk::ImageAspectFlagBits::eColor);
+    texture_image_view = application->image_manager.CreateImageView(*texture_image, vk::Format::eR8G8B8A8Srgb, vk::ImageAspectFlagBits::eColor);
 }
 
 void TextureManager::CreateTextureSampler()

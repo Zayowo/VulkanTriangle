@@ -157,6 +157,7 @@
     <ClCompile Include="DepthResources.cpp" />
     <ClCompile Include="Drawer.cpp" />
     <ClCompile Include="GraphicsPipeline.cpp" />
+    <ClCompile Include="ImageManager.cpp" />
     <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="Surface.cpp" />
     <ClCompile Include="TextureManager.cpp" />
@@ -171,6 +172,7 @@
     <ClInclude Include="DepthResources.h" />
     <ClInclude Include="Drawer.h" />
     <ClInclude Include="GraphicsPipeline.h" />
+    <ClInclude Include="ImageManager.h" />
     <ClInclude Include="Renderer.h" />
     <ClInclude Include="Surface.h" />
     <ClInclude Include="TextureManager.h" />

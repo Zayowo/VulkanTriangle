@@ -16,16 +16,13 @@ public:
     void CreateIndexBuffer();
     void CreateUniformBuffers();
     
-    // Uniform Buffers
+    // Update
     void UpdateUniformBuffer(uint32_t);
     
     // Buffers
     std::pair<vk::raii::Buffer, vk::raii::DeviceMemory> CreateBuffer(vk::DeviceSize, vk::BufferUsageFlags, vk::MemoryPropertyFlags);
     
-    // Texture
-    std::pair<vk::raii::Image, vk::raii::DeviceMemory> CreateImage(uint32_t, uint32_t, vk::Format, vk::ImageTiling, vk::ImageUsageFlags, vk::MemoryPropertyFlags);
-    vk::raii::ImageView CreateImageView(vk::Image const&, vk::Format, vk::ImageAspectFlags);
-    
+    // Getters
     std::vector<vk::raii::CommandBuffer>& GetCommandBuffers();
     vk::raii::Buffer& GetVertexBuffer();
     vk::raii::Buffer& GetIndexBuffer();

@@ -43,6 +43,13 @@ void Drawer::DrawFrame()
     auto& swap_chain = application->surface.GetSwapChain();
     auto [result, image_index] = swap_chain.acquireNextImage(UINT64_MAX, *present_complete_semaphores[frame_index], nullptr);
     
+    // In case when we acquire the next image, the result is "OutOfDate", we recreate swap chain!
+    if (result == vk::Result::eErrorOutOfDateKHR)
+    {
+        application->surface.RecreateSwapChain();
+        return;
+    }
+    
     if (result != vk::Result::eSuccess && result != vk::Result::eSuboptimalKHR)
     {
         assert(result == vk::Result::eTimeout || result == vk::Result::eNotReady);

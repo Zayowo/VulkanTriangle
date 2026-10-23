@@ -140,7 +140,7 @@ void Surface::CreateImageViews()
     
     for (auto& image : swap_chain_images)
     {
-        swap_chain_image_views.emplace_back(application->buffers.CreateImageView(image, swap_chain_surface_format.format, vk::ImageAspectFlagBits::eColor));
+        swap_chain_image_views.emplace_back(application->image_manager.CreateImageView(image, swap_chain_surface_format.format, vk::ImageAspectFlagBits::eColor));
     }
 }
 

@@ -2,7 +2,7 @@
 
 #include "Renderer.h"
 
-Application::Application() : renderer(this), surface(this), graphics_pipeline(this), buffers(this), depth_resources(this), texture_manager(this), drawer(this)
+Application::Application() : renderer(this), surface(this), graphics_pipeline(this), buffers(this), depth_resources(this), texture_manager(this), drawer(this), image_manager(this)
 {
 }
 

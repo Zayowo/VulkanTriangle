@@ -11,8 +11,8 @@ void DepthResources::CreateDepthResources()
     auto& swap_chain_extent = application->surface.GetSwapChainExtent();
     
     vk::Format depth_format = FindDepthFormat();
-    std::tie(depth_image, depth_image_memory) = application->buffers.CreateImage(swap_chain_extent.width, swap_chain_extent.height, depth_format, vk::ImageTiling::eOptimal, vk::ImageUsageFlagBits::eDepthStencilAttachment, vk::MemoryPropertyFlagBits::eDeviceLocal);
-    depth_image_view = application->buffers.CreateImageView(depth_image, depth_format, vk::ImageAspectFlagBits::eDepth);
+    std::tie(depth_image, depth_image_memory) = application->image_manager.CreateImage(swap_chain_extent.width, swap_chain_extent.height, depth_format, vk::ImageTiling::eOptimal, vk::ImageUsageFlagBits::eDepthStencilAttachment, vk::MemoryPropertyFlagBits::eDeviceLocal);
+    depth_image_view = application->image_manager.CreateImageView(depth_image, depth_format, vk::ImageAspectFlagBits::eDepth);
 }
 
 vk::Format DepthResources::FindSupportedFormat(const std::vector<vk::Format>& candidates, vk::ImageTiling tiling, vk::FormatFeatureFlags features)

@@ -161,7 +161,6 @@ void GraphicsPipeline::CreateGraphicsPipeline()
     };
     
     pipeline_layout = vk::raii::PipelineLayout(device, pipeline_layout_create_info);
-    pipeline_layout = vk::raii::PipelineLayout(device, pipeline_layout_create_info);
     
     vk::StructureChain<
         vk::GraphicsPipelineCreateInfo,

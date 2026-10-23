@@ -315,6 +315,25 @@ void Renderer::CreateLogicalDevice()
     queue = vk::raii::Queue(device, queue_index, 0);
 }
 
+uint32_t Renderer::FindMemoryType(uint32_t type_filter, vk::MemoryPropertyFlags properties)
+{
+    auto& physical_device = application->renderer.GetPhysicalDevice();
+    vk::PhysicalDeviceMemoryProperties memory_properties = physical_device.getMemoryProperties();
+    
+    for (uint32_t i = 0; i < memory_properties.memoryTypeCount; i++)
+    {
+        if (
+            (type_filter & (1 << i)) &&
+            (memory_properties.memoryTypes[i].propertyFlags & properties) == properties
+        )
+        {
+            return i;
+        }
+    }
+    
+    throw std::runtime_error("Failed to find suitable memory type!");
+}
+
 vk::raii::Instance& Renderer::GetInstance()
 {
     return instance;

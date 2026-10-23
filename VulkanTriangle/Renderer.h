@@ -14,6 +14,10 @@ public:
     void PickPhysicalDevice();
     void CreateLogicalDevice();
     
+    // Helpers
+    uint32_t FindMemoryType(uint32_t, vk::MemoryPropertyFlags);
+    
+    // Getters
     vk::raii::Instance& GetInstance();
     vk::raii::PhysicalDevice& GetPhysicalDevice();
     vk::raii::Device& GetDevice();
