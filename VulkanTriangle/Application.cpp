@@ -45,6 +45,7 @@ void Application::InitVulkan()
 {
     // Setup
     renderer.CreateInstance();
+    renderer.SetupDebugCallback();
     surface.CreateSurface();
     renderer.PickPhysicalDevice();
     renderer.CreateLogicalDevice();
@@ -60,12 +61,15 @@ void Application::InitVulkan()
     // Buffers
     buffers.CreateCommandPool();
     
+    // Create resources for the depth of objects
     buffers.CreateDepthResources();
     
+    // Handle texture(s) stuff 
     buffers.CreateTextureImage();
     buffers.CreateTextureImageView();
     buffers.CreateTextureSampler();
     
+    // Create buffers we need, vertices, indices, and uniform objects
     buffers.CreateVertexBuffer();
     buffers.CreateIndexBuffer();
     buffers.CreateUniformBuffers();

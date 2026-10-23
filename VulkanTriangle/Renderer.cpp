@@ -68,8 +68,6 @@ void Renderer::CreateInstance()
     };
 
     instance = vk::raii::Instance(context, create_info);
-
-    SetupDebugCallback();
 }
 
 std::vector<const char*> Renderer::GetRequiredDeviceExtensions()

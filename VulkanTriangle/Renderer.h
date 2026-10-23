@@ -10,6 +10,7 @@ public:
     Renderer(Application*);
     
     void CreateInstance();
+    void SetupDebugCallback();
     void PickPhysicalDevice();
     void CreateLogicalDevice();
     
@@ -34,7 +35,6 @@ private:
     std::vector<const char*> GetRequiredExtensions();
     std::vector<const char*> GetRequiredLayers();
 
-    void SetupDebugCallback();
     static VKAPI_ATTR vk::Bool32 VKAPI_ATTR DebugCallback(
         vk::DebugUtilsMessageSeverityFlagBitsEXT,
         vk::DebugUtilsMessageTypeFlagsEXT,
